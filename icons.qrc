@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/playpause">
+        <file>icons/playIcon</file>
+        <file>icons/pauseIcon</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>icons/1024px-Location_dot_red.svg.png</file>
+        <file>icons/Location_dot_blue.svg.png</file>
+        <file>icons/arrowDown.png</file>
+        <file>icons/arrowLeft.png</file>
+        <file>icons/arrowRight.png</file>
+        <file>icons/arrowUp.png</file>
+    </qresource>
+</RCC>
