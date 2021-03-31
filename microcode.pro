@@ -12,12 +12,12 @@ SOURCES += \
     main.cpp \
     cpu.cpp \
     microcoderom.cpp \
-    ram.cpp
+    ramwindow.cpp
 
 HEADERS += \
     cpu.h \
     microcoderom.h \
-    ram.h
+    ramwindow.h
 
 FORMS +=
 

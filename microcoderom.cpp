@@ -3,12 +3,11 @@
 #include <QMessageBox>
 #include <QSpinBox>
 #include <QLabel>
+#include <QCloseEvent>
 
-
-microcodeROM::microcodeROM(QWidget *parent)
+microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 {
     this->setWindowTitle("Microcode ROM");
-    QWidget *widget = new QWidget;
     table = new QTableWidget(100, 19, this);
     QStringList hLabels;
     hLabels << "next" << "cond" << "alu.opcode" << "ir.we" << "pc.we" << "pc.oe" << "a.we" << "a.oe" << "x.we" << "y.we" << "z.we" << "z.oe" <<
@@ -53,21 +52,21 @@ microcodeROM::microcodeROM(QWidget *parent)
     resetButton = new QPushButton("Reset");
     addRowButton = new QPushButton("Add a row to the table");
     resetButton->setDisabled(true);
-    currTable.resize(table->rowCount());
+    currentMROM.resize(table->rowCount());
     for (int row = 0; row < table->rowCount(); row++)
     {
-        currTable[row].resize(table->columnCount());
+        currentMROM[row].resize(table->columnCount());
         for (int col = 0; col < table->columnCount(); col++)
         {
-            currTable[row][col] = 0;
+            currentMROM[row][col] = 0;
         }
     }
 
-    connect(okButton, SIGNAL(clicked()), this, SLOT(on_okButton_clicked()));
-    connect(applyButton, SIGNAL(clicked()), this, SLOT(on_applyButton_clicked()));
-    connect(cancelButton, SIGNAL(clicked()), this, SLOT(on_cancelButton_clicked()));
-    connect(resetButton, SIGNAL(clicked()), this, SLOT(on_resetButton_clicked()));
-    connect(addRowButton, SIGNAL(clicked()), this, SLOT(on_addRowButton_clicked()));
+    connect(okButton, SIGNAL(clicked()), this, SLOT(ok()));
+    connect(applyButton, SIGNAL(clicked()), this, SLOT(apply()));
+    connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancel()));
+    connect(resetButton, SIGNAL(clicked()), this, SLOT(reset()));
+    connect(addRowButton, SIGNAL(clicked()), this, SLOT(addRow()));
 
 
 
@@ -84,51 +83,43 @@ microcodeROM::microcodeROM(QWidget *parent)
     vLayout->addWidget(table);
     vLayout->addLayout(buttonsLayout);
 
-    widget->setLayout(vLayout);
-    this->setCentralWidget(widget);
+    this->setLayout(vLayout);
+
 
     //connect(table, SIGNAL(cellChanged(int, int)), this, SLOT(next_Cell_Changed(int, int)));
 
 }
 
-microcodeROM::~microcodeROM()
-{
-    delete table;
-    delete applyButton;
-    delete resetButton;
-    delete okButton;
-    delete cancelButton;
-}
 
-void microcodeROM::on_okButton_clicked()
+void microcodeROM::ok()
 {
     for (int row = 0; row < table->rowCount(); row++)
     {
         for (int column = 0; column < table->columnCount(); column++)
         {
             bool converted = true;
-            currTable[row][column] = table->cellWidget(row, column)->property("value").toInt(&converted);
-            if (!converted) currTable[row][column] = 0;
+            currentMROM[row][column] = table->cellWidget(row, column)->property("value").toInt(&converted);
+            if (!converted) currentMROM[row][column] = 0;
         }
     }
     this->hide();
 }
 
-void microcodeROM::on_applyButton_clicked()
+void microcodeROM::apply()
 {
     for (int row = 0; row < table->rowCount(); row++)
     {
         for (int column = 0; column < table->columnCount(); column++)
         {
             bool converted = true;
-            currTable[row][column] = table->cellWidget(row, column)->property("value").toInt(&converted);
-            if (!converted) currTable[row][column] = 0;
+            currentMROM[row][column] = table->cellWidget(row, column)->property("value").toInt(&converted);
+            if (!converted) currentMROM[row][column] = 0;
         }
     }
     applyButton->setDisabled(true);
 }
 
-void microcodeROM::on_cancelButton_clicked(){
+void microcodeROM::cancel(){
     QMessageBox::StandardButton reply = QMessageBox::question(this, "Revert changes", "Are you sure you want to cancel and quit the MicroCode ROM? The changes you've made will not be saved.");
     if (reply == QMessageBox::Yes)
     {
@@ -136,14 +127,14 @@ void microcodeROM::on_cancelButton_clicked(){
         {
             for (int column = 0; column < table->columnCount(); column++)
             {
-                table->cellWidget(row, column)->setProperty("value", currTable[row][column]);
+                table->cellWidget(row, column)->setProperty("value", currentMROM[row][column]);
             }
         }
         this->hide();
     }
 }
 
-void microcodeROM::on_resetButton_clicked(){
+void microcodeROM::reset(){
     QMessageBox::StandardButton reply = QMessageBox::question(this, "This will clear all elements in the table.", "Are you sure you want to reset the MicroCode ROM?");
     if (reply == QMessageBox::Yes)
     {
@@ -152,7 +143,7 @@ void microcodeROM::on_resetButton_clicked(){
             for (int column = 0; column < table->columnCount(); column++)
             {
                 table->cellWidget(row, column)->setProperty("value", 0);
-                currTable[row][column] = 0;
+                currentMROM[row][column] = 0;
             }
         }
         resetButton->setDisabled(true);
@@ -160,7 +151,7 @@ void microcodeROM::on_resetButton_clicked(){
     }
 }
 
-void microcodeROM::on_addRowButton_clicked()
+void microcodeROM::addRow()
 {
     table->setRowCount(table->rowCount() + 1);
     for (int j = 0; j < table->columnCount(); j++)
@@ -189,7 +180,6 @@ void microcodeROM::on_addRowButton_clicked()
 
 void microcodeROM::cellChanged(int value)
 {
-    qDebug("The Cell value was changed to %d", value);
     if (value != 0) resetButton->setEnabled(true);
     applyButton->setEnabled(true);
 }
@@ -197,5 +187,20 @@ void microcodeROM::cellChanged(int value)
 
 void microcodeROM::closeEvent(QCloseEvent *bar)
 {
-    on_cancelButton_clicked();
+    QMessageBox::StandardButton reply = QMessageBox::question(this, "Revert changes", "Are you sure you want to cancel and quit the MicroCode ROM? The changes you've made will not be saved.");
+    if (reply == QMessageBox::Yes)
+    {
+        for (int row = 0; row < table->rowCount(); row++)
+        {
+            for (int column = 0; column < table->columnCount(); column++)
+            {
+                table->cellWidget(row, column)->setProperty("value", currentMROM[row][column]);
+            }
+        }
+        bar->accept();
+    }
+    else
+    {
+        bar->ignore();
+    }
 }

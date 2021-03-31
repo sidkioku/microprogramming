@@ -11,6 +11,7 @@
 #include <QtCore>
 #include <QGroupBox>
 #include "microcoderom.h"
+#include "ramwindow.h"
 
 class CPU : public QMainWindow
 {
@@ -23,13 +24,18 @@ public:
 private:
     bool running;
     microcodeROM *microcode;
-    QPushButton *rombutton;
+    ramWindow *ram;
+    QPushButton *romButton;
 
     QFrame *bus;
     QFrame *data;
 
-    QCheckBox *gpio1;
-    QCheckBox *gpio2;
+    QPushButton *gpioIn1;
+    QPushButton *gpioIn2;
+
+    QPushButton *gpioOut1;
+    QPushButton *gpioOut2;
+    QPushButton *gpioOut3;
 
     QFrame *leftBorder;
     QFrame *rightBorder;
@@ -43,7 +49,7 @@ private:
     QPushButton *readRAM;
     QPushButton *writeRAM;
 
-    QPushButton *ram;
+    QPushButton *ramButton;
 
     QPushButton *instructionReg;
     QPushButton *progCounter;
@@ -76,7 +82,7 @@ private:
 protected:
     void paintEvent(QPaintEvent *e);
 private slots:
-    void mROM();
+    void microcodeOpen();
     void playPause(bool checked);
     void nextStep();
     void irExp();
@@ -86,6 +92,10 @@ private slots:
     void marExp();
     void mdrInExp();
     void mdrOutExp();
+    void ramOpen();
+    void microcodeFile();
+    void ramFile();
+    void saveRam();
 
 };
 #endif // CPU_H

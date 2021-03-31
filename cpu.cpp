@@ -1,5 +1,5 @@
 #include "cpu.h"
-#include "microcoderom.h"
+
 #include <QLabel>
 #include <QPainter>
 #include <QPen>
@@ -7,15 +7,20 @@
 #include <QCloseEvent>
 #include <QPalette>
 #include <QCheckBox>
-
+#include <QFileDialog>
+#include <QDir>
+#include "ramwindow.h"
 
 
 
 CPU::CPU(QWidget *parent) : QMainWindow(parent)
 {
+    //TODO: Change variable names
     this->setWindowTitle("MicroCode Simulator");
     QWidget *widget = new QWidget();
     microcode = new microcodeROM();
+    ram = new ramWindow();
+
     QHBoxLayout *buttonsLayout = new QHBoxLayout();
     QVBoxLayout *irLayout = new QVBoxLayout();
     QVBoxLayout *pcLayout = new QVBoxLayout();
@@ -24,51 +29,61 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     QVBoxLayout *cpuLayout = new QVBoxLayout();
 
 
-   // QGroupBox *outerPart = new QGroupBox();
-   // outerPart->setStyleSheet("background-color: gray");
-
-    ram = new QPushButton("RAM");
-    QPalette pal = ram->palette();
-    ram->setFlat(true);
-    ram->setAutoFillBackground(true);
+    //RAM Button
+    ramButton = new QPushButton("RAM");
+    QPalette pal = ramButton->palette();
+    ramButton->setFlat(true);
+    ramButton->setAutoFillBackground(true);
     pal.setColor(QPalette::Button, QColor(Qt::gray));
-    ram->setPalette(pal);
-    QFont font = ram->font();
+    ramButton->setPalette(pal);
+    QFont font = ramButton->font();
     font.setPointSize(10);
     font.setBold(true);
     font.setUnderline(true);
-    ram->setFont(font);
-    ram->setMinimumSize(100, 600);
-    ram->setStyleSheet("border: 2px solid black;");
-
-    gpio1 = new QCheckBox("GPIO 1");
-    gpio2 = new QCheckBox("GPIO 2");
-    QVBoxLayout *gpio1Layout = new QVBoxLayout();
-    QVBoxLayout *gpio2Layout = new QVBoxLayout();
-    gpio1->setStyleSheet("background-color: gray");
-    gpio2->setStyleSheet("background-color: gray");
-    gpio1Layout->addStretch();
-    gpio1Layout->addWidget(gpio1);
-    gpio2Layout->addStretch();
-    gpio2Layout->addWidget(gpio2);
+    ramButton->setFont(font);
+    ramButton->setMinimumSize(100, 600);
+    ramButton->setStyleSheet("border: 2px solid black;");
 
     data = new QFrame();
     data->setFrameShape(QFrame::HLine);
     data->setFrameShadow(QFrame::Plain);
     data->setLineWidth(3);
 
+    QVBoxLayout *ramLayout = new QVBoxLayout();
+    ramLayout->addSpacing(20);
+    ramLayout->addWidget(ramButton);
+    ramLayout->addStretch();
+    ramLayout->addWidget(data);
+
+    //GPIOs
+    gpioIn1 = new QPushButton("GPIO Input 1");
+    gpioIn2 = new QPushButton("GPIO Input 2");
+    gpioOut1 = new QPushButton("GPIO Output 1");
+    gpioOut2 = new QPushButton("GPIO Output 2");
+    gpioOut3 = new QPushButton("GPIO Output 3");
+    QVBoxLayout *gpioInLayout = new QVBoxLayout();
+    gpioInLayout->addWidget(gpioIn1);
+    gpioInLayout->addWidget(gpioIn2);
+    gpioInLayout->addStretch();
+
+    QVBoxLayout *gpioOutLayout = new QVBoxLayout();
+    gpioOutLayout->addWidget(gpioOut1);
+    gpioOutLayout->addWidget(gpioOut2);
+    gpioOutLayout->addWidget(gpioOut3);
+    gpioOutLayout->addStretch();
+
     QHBoxLayout *gpioLayout = new QHBoxLayout();
-    gpioLayout->addWidget(ram);
-    gpioLayout->addLayout(gpio1Layout);
-    gpioLayout->addLayout(gpio2Layout);
+    gpioLayout->addLayout(gpioInLayout);
+    gpioLayout->addLayout(gpioOutLayout);
 
-
-
-    QVBoxLayout *outerLayout = new QVBoxLayout();
-    outerLayout->addSpacing(20);
-    outerLayout->addLayout(gpioLayout);
-    outerLayout->addStretch();
-    outerLayout->addWidget(data);
+    //    QVBoxLayout *gpio1Layout = new QVBoxLayout();
+    //    QVBoxLayout *gpio2Layout = new QVBoxLayout();
+    //    gpio1->setStyleSheet("background-color: gray");
+    //    gpio2->setStyleSheet("background-color: gray");
+    //    gpio1Layout->addStretch();
+    //    gpio1Layout->addWidget(gpio1);
+    //    gpio2Layout->addStretch();
+    //    gpio2Layout->addWidget(gpio2);
 
 
     bus = new QFrame();
@@ -93,7 +108,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     nextStepButton->setMinimumSize(150, 23);
     resetButton = new QPushButton("Reset");
     resetButton->setMinimumSize(150, 23);
-    irLayout->addSpacing(20);
+    irLayout->addSpacing(110);
     irLayout->addWidget(playpauseButton);
     irLayout->addWidget(nextStepButton);
     irLayout->addWidget(resetButton);
@@ -104,6 +119,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
 
     readMicrocode = new QPushButton("Read Microcode ROM...");
     readMicrocode->setMinimumSize(150, 23);
+    readMicrocode->setCursor(Qt::PointingHandCursor);
     pcLabel = new QLabel("Program Counter");
     pcLabel->setAlignment(Qt::AlignCenter);
     progCounter = new QPushButton("0000000");
@@ -111,7 +127,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     progCounter->setCursor(Qt::WhatsThisCursor);
     progCounter->setMinimumSize(150, 23);
 
-    pcLayout->addSpacing(20);
+    pcLayout->addSpacing(110);
     pcLayout->addWidget(readMicrocode);
     pcLayout->addStretch();
     pcLayout->addWidget(pcLabel);
@@ -119,15 +135,17 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
 
     readRAM = new QPushButton("Read RAM...");
     readRAM->setMinimumSize(150, 23);
+    readRAM->setCursor(Qt::PointingHandCursor);
     writeRAM = new QPushButton("Write RAM...");
     writeRAM->setMinimumSize(150, 23);
+    writeRAM->setCursor(Qt::PointingHandCursor);
     aLabel = new QLabel("A Register");
     aLabel->setAlignment(Qt::AlignCenter);
     aReg = new QPushButton("0000000");
     aReg->setStyleSheet("border: 2px solid black;");
     aReg->setCursor(Qt::WhatsThisCursor);
     aReg->setMinimumSize(150, 23);
-    aLayout->addSpacing(20);
+    aLayout->addSpacing(110);
     aLayout->addWidget(readRAM);
     aLayout->addWidget(writeRAM);
     aLayout->addStretch();
@@ -163,7 +181,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     mdrOutReg->setStyleSheet("border: 2px solid black;");
     mdrOutReg->setMinimumSize(150, 23);
 
-    memLayout->addSpacing(20);
+    memLayout->addSpacing(110);
     memLayout->addWidget(marLabel);
     memLayout->addWidget(marReg);
     memLayout->addStretch();
@@ -174,13 +192,17 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     memLayout->addWidget(mdrOutReg);
 
     ///Microcode ROM
-    rombutton = new QPushButton(this);
-    rombutton->setFont(font);
-    rombutton->setText("Microcode ROM");
-    rombutton->setFlat(true);
-    rombutton->setCursor(Qt::PointingHandCursor);
-    rombutton->setMinimumSize(150, 23);
+    romButton = new QPushButton(this);
+    romButton->setFont(font);
+    romButton->setText("Microcode ROM");
+    romButton->setFlat(true);
+    romButton->setCursor(Qt::PointingHandCursor);
+    romButton->setMinimumSize(150, 23);
 
+    QVBoxLayout *romLayout = new QVBoxLayout();
+    romLayout->addLayout(gpioLayout);
+    romLayout->addWidget(romButton);
+    romLayout->addStretch();
     QLabel *busLabel = new QLabel("Data Bus");
     busLabel->setAlignment(Qt::AlignCenter);
     busButton = new QPushButton("00000000");
@@ -200,12 +222,14 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     busLayout->addStretch();
 
     ///Put everything together
-    buttonsLayout->addWidget(rombutton);
+    //    buttonsLayout->addWidget(rombutton);
+    buttonsLayout->addLayout(romLayout);
     buttonsLayout->addLayout(irLayout);
     buttonsLayout->addLayout(pcLayout);
     buttonsLayout->addLayout(aLayout);
     buttonsLayout->addLayout(alu);
     buttonsLayout->addLayout(memLayout);
+    //    buttonsLayout->addWidget(ramButton);
 
     QPushButton *romRam = new QPushButton("00000000");
     romRam->setStyleSheet("border: 2px solid black;");
@@ -228,16 +252,22 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     QHBoxLayout *completeLayout = new QHBoxLayout();
     completeLayout->addLayout(cpuLayout);
     completeLayout->addSpacing(50);
-    completeLayout->addLayout(outerLayout);
+    completeLayout->addLayout(ramLayout);
 
     widget->setLayout(completeLayout);
     this->setCentralWidget(widget);
     this->resize(1700, 1000);
 
     ///Connections
-    connect(rombutton, SIGNAL(clicked()), this, SLOT(mROM()));
+    connect(romButton, SIGNAL(clicked()), this, SLOT(microcodeOpen()));
+    connect(ramButton, SIGNAL(clicked()), this, SLOT(ramOpen()));
+
     connect(playpauseButton, SIGNAL(clicked(bool)), this, SLOT(playPause(bool)));
     connect(nextStepButton, SIGNAL(clicked()), this, SLOT(nextStep()));
+
+    connect(readMicrocode, SIGNAL(clicked()), this, SLOT(microcodeFile()));
+    connect(readRAM, SIGNAL(clicked()), this, SLOT(ramFile()));
+    connect(writeRAM, SIGNAL(clicked()), this, SLOT(saveRam()));
     connect(progCounter, SIGNAL(clicked()), this, SLOT(pcExp()));
     connect(instructionReg, SIGNAL(clicked()), this, SLOT(irExp()));
     connect(aReg, SIGNAL(clicked()), this, SLOT(aRegExp()));
@@ -249,6 +279,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
 CPU::~CPU()
 {
     delete microcode;
+    delete ram;
 }
 
 void CPU::paintEvent(QPaintEvent *e)
@@ -270,8 +301,8 @@ void CPU::paintEvent(QPaintEvent *e)
     ///Arrows to the BUS
 
     //Arrow Microcode ROM -> BUS
-    painter.drawLine(rombutton->x() + rombutton->width()/2,           rombutton->y() + rombutton->height(),           rombutton->x() + rombutton->width()/2,           bus->y());
-    painter.drawPixmap(rombutton->x() + rombutton->width()/2 - 6,           bus->y() - 11, arrowDown->pixmap(12,12));
+    painter.drawLine(romButton->x() + romButton->width()/2, romButton->y() + romButton->height(), romButton->x() + romButton->width()/2, bus->y());
+    painter.drawPixmap(romButton->x() + romButton->width()/2 - 6, bus->y() - 11, arrowDown->pixmap(12,12));
 
     //Arrow Instruction Register -> BUS
     painter.drawLine(instructionReg->x() + instructionReg->width()/4, instructionReg->y() + instructionReg->height(), instructionReg->x() + instructionReg->width()/4, bus->y());
@@ -316,9 +347,9 @@ void CPU::paintEvent(QPaintEvent *e)
     painter.drawPixmap(zReg->x() + zReg->width() + 100 - 6, bus->y() - 10, arrowDown->pixmap(12, 12));
 
     //Arrow Comparisons -> Microcode ROM
-    painter.drawLine(comparisons->x(), comparisons->y() + comparisons->height()/2, rombutton->x() + 3 *rombutton->width()/4, comparisons->y() + comparisons->height()/2);
-    painter.drawLine(rombutton->x() + 3 *rombutton->width()/4, comparisons->y() + comparisons->height()/2, rombutton->x() + 3 *rombutton->width()/4, rombutton->y());
-    painter.drawPixmap(rombutton->x() + 3 *rombutton->width()/4 - 6, rombutton->y() - 10, arrowDown->pixmap(12, 12));
+    painter.drawLine(comparisons->x(), comparisons->y() + comparisons->height()/2, romButton->x() + 3 *romButton->width()/4, comparisons->y() + comparisons->height()/2);
+    painter.drawLine(romButton->x() + 3 *romButton->width()/4, comparisons->y() + comparisons->height()/2, romButton->x() + 3 *romButton->width()/4, romButton->y());
+    painter.drawPixmap(romButton->x() + 3 *romButton->width()/4 - 6, romButton->y() - 10, arrowDown->pixmap(12, 12));
 
     //Arrow Z -> Comparisons
     painter.drawLine(comparisons->x() + comparisons->width()/2, zReg->y() + zReg->height()/2, comparisons->x() + comparisons->width()/2, comparisons->y() + comparisons->height());
@@ -326,9 +357,9 @@ void CPU::paintEvent(QPaintEvent *e)
     painter.drawPixmap(comparisons->x() + comparisons->width()/2 - 6, comparisons->y() + comparisons->height() - 1, arrowUp->pixmap(12, 12));
 
     //Arrow IR -> Microcode ROM
-    painter.drawLine(instructionReg->x(), instructionReg->y() + instructionReg->height()/2, rombutton->x() + 3 *rombutton->width()/4,  instructionReg->y() + instructionReg->height()/2);
-    painter.drawLine(rombutton->x() + 3 *rombutton->width()/4, instructionReg->y() + instructionReg->height()/2, rombutton->x() + 3 *rombutton->width()/4, rombutton->y() + rombutton->height());
-    painter.drawPixmap(rombutton->x() + 3 *rombutton->width()/4 - 6, rombutton->y() + rombutton->height(), arrowUp->pixmap(12, 12));
+    painter.drawLine(instructionReg->x(), instructionReg->y() + instructionReg->height()/2, romButton->x() + 3 *romButton->width()/4,  instructionReg->y() + instructionReg->height()/2);
+    painter.drawLine(romButton->x() + 3 *romButton->width()/4, instructionReg->y() + instructionReg->height()/2, romButton->x() + 3 *romButton->width()/4, romButton->y() + romButton->height());
+    painter.drawPixmap(romButton->x() + 3 *romButton->width()/4 - 6, romButton->y() + romButton->height(), arrowUp->pixmap(12, 12));
 
     ///Memory Lines
     //Arrow MDR IN -> BUS
@@ -347,24 +378,29 @@ void CPU::paintEvent(QPaintEvent *e)
     painter.drawPixmap(marReg->x() - 12,                                     marReg->y() + marReg->height()/2 - 6, arrowRight->pixmap(12, 12));
 
 
-    //Border around outer part
+    //Gray background for outer part
     painter.setPen(grayPen);
-    QPointF topLeft(ram->x() - 10, 5);
-    QPointF bottomRight(this->width() - 5, this->height() - 5);
+    QPointF topLeft(ramButton->x() - 10, 0);
+    QPointF bottomRight(this->width(), this->height());
     QRectF rectangle(topLeft, bottomRight);
     painter.fillRect(rectangle, Qt::gray);
+
+    QPointF leftTop(0, 0);
+    QPointF rightBottom(this->width(), gpioOut3->y() + gpioOut3->height() + 5);
+    QRectF rect(leftTop, rightBottom);
+    painter.fillRect(rect, Qt::gray);
 
 
     painter.setPen(dashedPen);
 
     //Arrow MAR -> RAM
-    painter.drawLine(marReg->x() + marReg->width(), marReg->y() + marReg->height()/2, ram->x(), marReg->y() + marReg->height()/2);
-    painter.drawPixmap(ram->x() - 12, marReg->y() + marReg->height()/2 - 6, arrowRight->pixmap(12, 12));
+    painter.drawLine(marReg->x() + marReg->width(), marReg->y() + marReg->height()/2, ramButton->x(), marReg->y() + marReg->height()/2);
+    painter.drawPixmap(ramButton->x() - 12, marReg->y() + marReg->height()/2 - 6, arrowRight->pixmap(12, 12));
 
     //Arrow Outer Data Bus -> MDR In
-    painter.drawLine(data->x() + 20, data->y(), data->x() + 20, ram->y() + ram->height() + 10);
-    painter.drawLine( data->x() + 20, ram->y() + ram->height() + 10, mdrInReg->x() + mdrInReg->width() + 40,  ram->y() + ram->height() + 10);
-    painter.drawLine(mdrInReg->x() + mdrInReg->width() + 40,  ram->y() + ram->height() + 10, mdrInReg->x() + mdrInReg->width() + 40,  mdrInReg->y() + mdrInReg->height()/2);
+    painter.drawLine(data->x() + 20, data->y(), data->x() + 20, ramButton->y() + ramButton->height() + 10);
+    painter.drawLine( data->x() + 20, ramButton->y() + ramButton->height() + 10, mdrInReg->x() + mdrInReg->width() + 40,  ramButton->y() + ramButton->height() + 10);
+    painter.drawLine(mdrInReg->x() + mdrInReg->width() + 40,  ramButton->y() + ramButton->height() + 10, mdrInReg->x() + mdrInReg->width() + 40,  mdrInReg->y() + mdrInReg->height()/2);
     painter.drawLine(mdrInReg->x() + mdrInReg->width() + 40,  mdrInReg->y() + mdrInReg->height()/2, mdrInReg->x() + mdrInReg->width(), mdrInReg->y() + mdrInReg->height()/2);
     painter.drawPixmap(mdrInReg->x() + mdrInReg->width(), mdrInReg->y() + mdrInReg->height()/2 - 6, arrowLeft->pixmap(12, 12));
 
@@ -374,32 +410,66 @@ void CPU::paintEvent(QPaintEvent *e)
     painter.drawPixmap( data->x() + 10 - 6, data->y() - 12, arrowDown->pixmap(12, 12));
 
     //Arrow Microcode ROM -> RAM
-    painter.drawLine(rombutton->x() + rombutton->width()/2, rombutton->y(), rombutton->x() + rombutton->width()/2, 10);
-    painter.drawLine(rombutton->x() + rombutton->width()/2, 10, ram->x() + ram->width()/2, 10);
-    painter.drawLine(ram->x() + ram->width()/2, 10, ram->x() + ram->width()/2, ram->y());
-    painter.drawPixmap(ram->x() + ram->width()/2 - 6, ram->y() - 12, arrowDown->pixmap(12, 12));
+    painter.drawLine(romButton->x() + romButton->width()/2, romButton->y(), romButton->x() + romButton->width()/2, 10);
+    painter.drawLine(romButton->x() + romButton->width()/2, 10, ramButton->x() + ramButton->width()/2, 10);
+    painter.drawLine(ramButton->x() + ramButton->width()/2, 10, ramButton->x() + ramButton->width()/2, ramButton->y());
+    painter.drawPixmap(ramButton->x() + ramButton->width()/2 - 6, ramButton->y() - 12, arrowDown->pixmap(12, 12));
 
     //Arrow RAM <-> Outer Data Bus
-    painter.drawLine(ram->x() + ram->width()/2, ram->y() + ram->height(), ram->x() + ram->width()/2, data->y());
-    painter.drawPixmap(ram->x() + ram->width()/2 - 6, ram->y() + ram->height(), arrowUp->pixmap(12, 12));
-    painter.drawPixmap(ram->x() + ram->width()/2 - 6, data->y() - 12, arrowDown->pixmap(12, 12));
+    painter.drawLine(ramButton->x() + ramButton->width()/2, ramButton->y() + ramButton->height(), ramButton->x() + ramButton->width()/2, data->y());
+    painter.drawPixmap(ramButton->x() + ramButton->width()/2 - 6, ramButton->y() + ramButton->height(), arrowUp->pixmap(12, 12));
+    painter.drawPixmap(ramButton->x() + ramButton->width()/2 - 6, data->y() - 12, arrowDown->pixmap(12, 12));
 
-    //Arrow GPIO 1 <-> Outer Data Bus
-    painter.drawLine(gpio1->x() + gpio1->width()/2, gpio1->y() + gpio1->height(), gpio1->x() + gpio1->width()/2, data->y());
-    painter.drawPixmap(gpio1->x() + gpio1->width()/2 - 6, gpio1->y() + gpio1->height(), arrowUp->pixmap(12, 12));
-    painter.drawPixmap(gpio1->x() + gpio1->width()/2 - 6, data->y() - 12, arrowDown->pixmap(12, 12));
+    //    //Arrow GPIO 1 <-> Outer Data Bus
+    //    painter.drawLine(gpio1->x() + gpio1->width()/2, gpio1->y() + gpio1->height(), gpio1->x() + gpio1->width()/2, data->y());
+    //    painter.drawPixmap(gpio1->x() + gpio1->width()/2 - 6, gpio1->y() + gpio1->height(), arrowUp->pixmap(12, 12));
+    //    painter.drawPixmap(gpio1->x() + gpio1->width()/2 - 6, data->y() - 12, arrowDown->pixmap(12, 12));
 
-    //Arrow GPIO 2 <-> Outer Data Bus
-    painter.drawLine(gpio2->x() + gpio2->width()/2, gpio2->y() + gpio2->height(), gpio2->x() + gpio2->width()/2, data->y());
-    painter.drawPixmap(gpio2->x() + gpio2->width()/2 - 6, gpio2->y() + gpio2->height(), arrowUp->pixmap(12, 12));
-    painter.drawPixmap(gpio2->x() + gpio2->width()/2 - 6, data->y() - 12, arrowDown->pixmap(12, 12));
+    //    //Arrow GPIO 2 <-> Outer Data Bus
+    //    painter.drawLine(gpio2->x() + gpio2->width()/2, gpio2->y() + gpio2->height(), gpio2->x() + gpio2->width()/2, data->y());
+    //    painter.drawPixmap(gpio2->x() + gpio2->width()/2 - 6, gpio2->y() + gpio2->height(), arrowUp->pixmap(12, 12));
+    //    painter.drawPixmap(gpio2->x() + gpio2->width()/2 - 6, data->y() - 12, arrowDown->pixmap(12, 12));
 
 
 }
 
-void CPU::mROM()
+void CPU::microcodeFile()
+{
+    QString readMicrocode = QFileDialog::getOpenFileName(this, "Open Microcode ROM...", QDir::homePath(), "ROM Files (*.rom)");
+    //TODO: Read Data from readMicrocode
+}
+
+void CPU::ramFile() {
+    QString readRAM = QFileDialog::getOpenFileName(this, "Open RAM File...", QDir::homePath(), "RAM Files (*.ram)");
+    QFile file(readRAM);
+
+    file.open(QIODevice::ReadOnly);
+    QTextStream in(&file);
+    QString text = in.readAll();
+    file.close();
+    //TODO: Read Data from readRAM
+}
+
+void CPU::saveRam()
+{
+    QString filename = QFileDialog::getSaveFileName(this, "Save RAM File...", QDir::homePath(), "RAM File (*.ram)");
+    QFile f(filename);
+    f.open(QIODevice::WriteOnly);
+    QTextStream out(&f);
+    QString text = ram->saveRam();
+    out << text;
+    f.flush();
+    f.close();
+}
+
+void CPU::microcodeOpen()
 {
     microcode->show();
+}
+
+void CPU::ramOpen()
+{
+    ram->show();
 }
 
 void CPU::playPause(bool checked)

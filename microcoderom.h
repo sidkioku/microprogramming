@@ -1,7 +1,7 @@
 #ifndef MICROCODEROM_H
 #define MICROCODEROM_H
 
-#include <QMainWindow>
+#include <QWidget>
 #include <QTableWidget>
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -9,12 +9,11 @@
 #include <QTableWidgetItem>
 #include <vector>
 
-class microcodeROM : public QMainWindow
+class microcodeROM : public QWidget
 {
     Q_OBJECT
 public:
-    microcodeROM(QWidget *parent = nullptr);
-    ~microcodeROM();
+    explicit microcodeROM(QWidget *parent = nullptr);
 
 private:
     QTableWidget *table;
@@ -23,18 +22,17 @@ private:
     QPushButton *cancelButton;
     QPushButton *resetButton;
     QPushButton *addRowButton;
-    std::vector<std::vector<int>> currTable;
-    std::vector<std::vector<int>> tempTable;
-    void reject();
+    std::vector<std::vector<int>> currentMROM;
+    std::vector<std::vector<int>> tempMROM;
     void closeEvent(QCloseEvent *bar);
 
 private slots:
-    void on_okButton_clicked();
-    void on_applyButton_clicked();
-    void on_cancelButton_clicked();
-    void on_resetButton_clicked();
-    void on_addRowButton_clicked();
-    void cellChanged(int i);
+    void ok();
+    void apply();
+    void cancel();
+    void reset();
+    void addRow();
+    void cellChanged(int value);
 
 };
 
