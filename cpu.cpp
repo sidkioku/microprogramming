@@ -9,13 +9,16 @@
 #include <QCheckBox>
 #include <QFileDialog>
 #include <QDir>
+#include <QRandomGenerator>
+#include <QTableWidgetItem>
+#include <QTableWidget>
+#include <vector>
 #include "ramwindow.h"
 
 
 
 CPU::CPU(QWidget *parent) : QMainWindow(parent)
 {
-    //TODO: Change variable names
     this->setWindowTitle("MicroCode Simulator");
     QWidget *widget = new QWidget();
     microcode = new microcodeROM();
@@ -29,8 +32,8 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     QVBoxLayout *cpuLayout = new QVBoxLayout();
 
 
-    //RAM Button
-    ramButton = new QPushButton("RAM");
+    ///RAM Button
+    ramButton = new QPushButton("External RAM");
     QPalette pal = ramButton->palette();
     ramButton->setFlat(true);
     ramButton->setAutoFillBackground(true);
@@ -55,7 +58,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     ramLayout->addStretch();
     ramLayout->addWidget(data);
 
-    //GPIOs
+    ///GPIOs
     gpioIn1 = new QPushButton("GPIO Input 1");
     gpioIn2 = new QPushButton("GPIO Input 2");
     gpioOut1 = new QPushButton("GPIO Output 1");
@@ -120,6 +123,9 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     readMicrocode = new QPushButton("Read Microcode ROM...");
     readMicrocode->setMinimumSize(150, 23);
     readMicrocode->setCursor(Qt::PointingHandCursor);
+    writeMicrocode = new QPushButton("Write Microcode ROM...");
+    writeMicrocode->setMinimumSize(150, 23);
+    writeMicrocode->setCursor(Qt::PointingHandCursor);
     pcLabel = new QLabel("Program Counter");
     pcLabel->setAlignment(Qt::AlignCenter);
     progCounter = new QPushButton("0000000");
@@ -129,6 +135,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
 
     pcLayout->addSpacing(110);
     pcLayout->addWidget(readMicrocode);
+    pcLayout->addWidget(writeMicrocode);
     pcLayout->addStretch();
     pcLayout->addWidget(pcLabel);
     pcLayout->addWidget(progCounter);
@@ -231,7 +238,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     buttonsLayout->addLayout(memLayout);
     //    buttonsLayout->addWidget(ramButton);
 
-    QPushButton *romRam = new QPushButton("00000000");
+    romRam = new QPushButton("00000000");
     romRam->setStyleSheet("border: 2px solid black;");
     romRam->setMinimumSize(150, 23);
     romRam->setCursor(Qt::WhatsThisCursor);
@@ -264,8 +271,10 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
 
     connect(playpauseButton, SIGNAL(clicked(bool)), this, SLOT(playPause(bool)));
     connect(nextStepButton, SIGNAL(clicked()), this, SLOT(nextStep()));
+    connect(resetButton, SIGNAL(clicked()), this, SLOT(reset()));
 
     connect(readMicrocode, SIGNAL(clicked()), this, SLOT(microcodeFile()));
+    connect(writeMicrocode, SIGNAL(clicked()), this, SLOT(saveRom()));
     connect(readRAM, SIGNAL(clicked()), this, SLOT(ramFile()));
     connect(writeRAM, SIGNAL(clicked()), this, SLOT(saveRam()));
     connect(progCounter, SIGNAL(clicked()), this, SLOT(pcExp()));
@@ -436,18 +445,34 @@ void CPU::paintEvent(QPaintEvent *e)
 void CPU::microcodeFile()
 {
     QString readMicrocode = QFileDialog::getOpenFileName(this, "Open Microcode ROM...", QDir::homePath(), "ROM Files (*.rom)");
-    //TODO: Read Data from readMicrocode
+    QFile file(readMicrocode);
+    file.open(QIODevice::ReadOnly);
+    QTextStream in(&file);
+    QString text = in.readAll();
+    file.close();
+    microcode->readRom(&text);
+}
+
+void CPU::saveRom()
+{
+    QString filename = QFileDialog::getSaveFileName(this, "Save Microcode ROM...", QDir::homePath(), "ROM Files (*.rom)");
+    QFile f(filename);
+    f.open(QIODevice::WriteOnly);
+    QTextStream out(&f);
+    QString text = microcode->saveRom();
+    out << text;
+    f.flush();
+    f.close();
 }
 
 void CPU::ramFile() {
     QString readRAM = QFileDialog::getOpenFileName(this, "Open RAM File...", QDir::homePath(), "RAM Files (*.ram)");
     QFile file(readRAM);
-
     file.open(QIODevice::ReadOnly);
     QTextStream in(&file);
     QString text = in.readAll();
     file.close();
-    //TODO: Read Data from readRAM
+    ram->readRam(&text);
 }
 
 void CPU::saveRam()
@@ -493,6 +518,72 @@ void CPU::playPause(bool checked)
 void CPU::nextStep()
 {
     qDebug() << "Next Step";
+    bool converted = true;
+    int nextRow = 1;
+    int opcode = 0;
+    nextRow = microcode->currentMROM[currentRow][0];
+    opcode = microcode->currentMROM[currentRow][2];
+    qDebug() << nextRow;
+    switch (opcode)
+    {
+    case 1:
+        zReg->setText(QString("%1").arg(xReg->text().toInt(&converted, 2) + yReg->text().toInt(&converted, 2), 8, 2, QChar('0')));
+        break;
+    case 2:
+        zReg->setText(QString("%1").arg(xReg->text().toInt(&converted, 2) - yReg->text().toInt(&converted, 2), 8, 2, QChar('0')));
+        break;
+    case 3:
+        zReg->setText(QString("%1").arg(xReg->text().toInt(&converted, 2) << 1, 8, 2, QChar('0')));
+        break;
+    case 4:
+        zReg->setText(QString("%1").arg(xReg->text().toInt(&converted, 2) >> 1, 8, 2, QChar('0')));
+        break;
+    case 5:
+        zReg->setText(xReg->text());
+        break;
+    case 6:
+        if (xReg->text().toInt(&converted, 2) > yReg->text().toInt(&converted, 2))
+        {
+            zReg->setText("1");
+        }
+        else
+        {
+            zReg->setText("0");
+        }
+        break;
+    }
+    bool values[microcode->currentMROM[currentRow].size() - 2];
+    for (int column = 0; column < (int)microcode->currentMROM[currentRow].size() - 2; column++)
+    {
+        values[column] = microcode->currentMROM[currentRow][column];
+    }
+
+}
+
+void CPU::reset()
+{
+   currentRow = 0;
+   quint32 value = QRandomGenerator::global()->bounded(127);
+   xReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
+   value = QRandomGenerator::global()->bounded(127);
+   yReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
+   value = QRandomGenerator::global()->bounded(127);
+   zReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
+   value = QRandomGenerator::global()->bounded(127);
+   marReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
+   value = QRandomGenerator::global()->bounded(127);
+   mdrInReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
+   value = QRandomGenerator::global()->bounded(127);
+   mdrOutReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
+   value = QRandomGenerator::global()->bounded(127);
+   busButton->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
+   value = QRandomGenerator::global()->bounded(127);
+   instructionReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
+   value = QRandomGenerator::global()->bounded(127);
+   aReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
+   value = QRandomGenerator::global()->bounded(127);
+   romRam->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
+   progCounter->setText("0000000");
 }
 
 void CPU::irExp()
@@ -629,5 +720,7 @@ void CPU::closeEvent(QCloseEvent* event)
         event->ignore();
     } else {
         event->accept();
+        delete microcode;
+        delete ram;
     }
 }

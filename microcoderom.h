@@ -7,6 +7,10 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QTableWidgetItem>
+#include <QMessageBox>
+#include <QSpinBox>
+#include <QLabel>
+#include <QCloseEvent>
 #include <vector>
 
 class microcodeROM : public QWidget
@@ -14,6 +18,10 @@ class microcodeROM : public QWidget
     Q_OBJECT
 public:
     explicit microcodeROM(QWidget *parent = nullptr);
+    QString saveRom();
+    void readRom(QString *text);
+    std::vector<std::vector<int>> currentMROM;
+
 
 private:
     QTableWidget *table;
@@ -22,7 +30,7 @@ private:
     QPushButton *cancelButton;
     QPushButton *resetButton;
     QPushButton *addRowButton;
-    std::vector<std::vector<int>> currentMROM;
+    QStringList hLabels;
     std::vector<std::vector<int>> tempMROM;
     void closeEvent(QCloseEvent *bar);
 

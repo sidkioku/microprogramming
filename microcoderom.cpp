@@ -1,27 +1,22 @@
 #include "microcoderom.h"
-#include <QTableWidget>
-#include <QMessageBox>
-#include <QSpinBox>
-#include <QLabel>
-#include <QCloseEvent>
+
 
 microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 {
     this->setWindowTitle("Microcode ROM");
     table = new QTableWidget(100, 19, this);
-    QStringList hLabels;
     hLabels << "next" << "cond" << "alu.opcode" << "ir.we" << "pc.we" << "pc.oe" << "a.we" << "a.oe" << "x.we" << "y.we" << "z.we" << "z.oe" <<
                "mar.we" << "mar.oe" << "mdrin.we" << "mdrin.oe" << "mdrout.we" << "mem.r/-w" << "mem.en";
     table->setHorizontalHeaderLabels(hLabels);
 
-    for (int j = 0; j < table->columnCount(); j++)
+    for (int column = 0; column < table->columnCount(); column++)
     {
-        for (int i= 0; i < table->rowCount(); i++)
+        for (int row = 0; row < table->rowCount(); row++)
         {
             QSpinBox *spinBox = new QSpinBox(this);
             spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
             spinBox->setDisplayIntegerBase(2);
-            switch (j) {
+            switch (column) {
             case 0:
                 spinBox->setMaximum(table->rowCount());
                 spinBox->setMinimum(0);
@@ -34,11 +29,11 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
                 spinBox->setMaximum(6); //ALU Operations: ADD, SUB, SHIFTLEFT, SHIFTRIGHT, PASS, COMPARE
                 break;
             default:
-                spinBox->setMaximum(32);
+                spinBox->setMaximum(1);
             }
             //   spinBox->setValue(0);
             connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &microcodeROM::cellChanged);
-            table->setCellWidget(i, j, spinBox);
+            table->setCellWidget(row, column, spinBox);
         }
     }
 
@@ -90,6 +85,70 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 
 }
 
+QString microcodeROM::saveRom()
+{
+    QString text = QStringLiteral("%1\t").arg(table->rowCount());
+    text.append(QStringLiteral("%1\n").arg(table->columnCount()));
+    for (int column = 0; column < table->columnCount(); column++)
+    {
+        text.append(hLabels[column]);
+        text.append("\t");
+    }
+    text.append("\n");
+    for (int row = 0; row < table->rowCount(); row++)
+    {
+        for (int column = 0; column < table->columnCount(); column++)
+        {
+            text.append(table->cellWidget(row, column)->property("value").toString());
+            text.append("\t");
+        }
+        text.append("\n");
+    }
+    return text;
+}
+
+void microcodeROM::readRom(QString *text)
+{
+    table->clear();
+    QStringList lines = text->split("\n", Qt::SkipEmptyParts);
+    QStringList firstRow = lines[0].split("\t", Qt::SkipEmptyParts);
+    table->setRowCount(firstRow[0].toInt());
+    table->setColumnCount(firstRow[1].toInt());
+    table->setHorizontalHeaderLabels(lines[1].split("\t", Qt::SkipEmptyParts));
+    for (int row = 0; row < table->rowCount(); row++)
+    {
+        QStringList line = lines[row + 2].split("\t", Qt::SkipEmptyParts);
+        for (int column = 0; column < table->columnCount(); column++)
+        {
+            QSpinBox *spinBox = new QSpinBox(this);
+            spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
+            spinBox->setDisplayIntegerBase(2);
+            switch (column)
+            {
+            case 0:
+                //next
+                spinBox->setMaximum(table->rowCount());
+                spinBox->setMinimum(0);
+                break;
+            case 1:
+                //condition
+                spinBox->setMaximum(8);
+                spinBox->setMinimum(0);
+                break;
+            case 2:
+                //ALU Operations
+                spinBox->setMaximum(6); //ADD, SUB, SHIFTLEFT, SHIFTRIGHT, PASS, COMPARE (in this order)
+                break;
+            default:
+                spinBox->setMaximum(32);
+            }
+            spinBox->setValue(line[column].toInt());
+            connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &microcodeROM::cellChanged);
+            table->setCellWidget(row, column, spinBox);
+        }
+    }
+}
+
 
 void microcodeROM::ok()
 {
@@ -107,11 +166,13 @@ void microcodeROM::ok()
 
 void microcodeROM::apply()
 {
+
     for (int row = 0; row < table->rowCount(); row++)
     {
         for (int column = 0; column < table->columnCount(); column++)
         {
             bool converted = true;
+
             currentMROM[row][column] = table->cellWidget(row, column)->property("value").toInt(&converted);
             if (!converted) currentMROM[row][column] = 0;
         }
@@ -154,6 +215,15 @@ void microcodeROM::reset(){
 void microcodeROM::addRow()
 {
     table->setRowCount(table->rowCount() + 1);
+    currentMROM.resize(table->rowCount());
+    for (int row = 0; row < table->rowCount(); row++)
+    {
+        currentMROM[row].resize(table->columnCount());
+        for (int col = 0; col < table->columnCount(); col++)
+        {
+            currentMROM[row][col] = 0;
+        }
+    }
     for (int j = 0; j < table->columnCount(); j++)
     {
         QSpinBox *spinBox = new QSpinBox(this);

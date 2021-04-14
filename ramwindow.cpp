@@ -11,7 +11,8 @@
 
 ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
 {
-    this->setWindowTitle("Random Access Memory (RAM)");
+    instructions = new machineCode();
+    this->setWindowTitle("External Random Access Memory (RAM)");
     table = new QTableWidget(16, 1, this);
     table->horizontalHeader()->hide();
     table->verticalHeader()->hide();
@@ -28,6 +29,7 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
 
     table->setSortingEnabled(false);
     table->resizeColumnsToContents();
+    machineCodeButton = new QPushButton("Instruction\nSet");
     okButton = new QPushButton("OK");
     cancelButton = new QPushButton("Cancel");
     applyButton = new QPushButton("Apply");
@@ -40,6 +42,7 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
 
     QVBoxLayout *vLayout = new QVBoxLayout();
     QHBoxLayout *hLayout = new QHBoxLayout();
+    vLayout->addWidget(machineCodeButton);
     vLayout->addStretch();
     vLayout->addWidget(resetButton);
     vLayout->addWidget(okButton);
@@ -54,6 +57,12 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
     connect(applyButton, SIGNAL(clicked()), this, SLOT(apply()));
     connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancel()));
     connect(resetButton, SIGNAL(clicked()), this, SLOT(reset()));
+    connect(machineCodeButton, SIGNAL(clicked()), this, SLOT(machineCodeWindow()));
+}
+
+ramWindow::~ramWindow()
+{
+    delete instructions;
 }
 
 QString ramWindow::saveRam()
@@ -72,9 +81,9 @@ QString ramWindow::saveRam()
 void ramWindow::readRam(QString *text)
 {
     table->clear();
-    QStringList lines = text->split("\n", QString::SkipEmptyParts);
+    QStringList lines = text->split("\n", Qt::SkipEmptyParts);
     table->setRowCount(lines[0].toInt());
-    lines.erase(0);
+
     for (int row = 0; row < table->rowCount(); row++)
     {
         QSpinBox *spinBox = new QSpinBox(this);
@@ -82,8 +91,8 @@ void ramWindow::readRam(QString *text)
         spinBox->setDisplayIntegerBase(2);
         spinBox->setMaximum(65535);
         spinBox->setMinimum(0);
+        spinBox->setValue(lines[row + 1].toInt());
         connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
-
         table->setCellWidget(row, 0, spinBox);
     }
 }
@@ -140,9 +149,13 @@ void ramWindow::cellChanged(int value)
     applyButton->setEnabled(true);
 }
 
+void ramWindow::machineCodeWindow()
+{
+    instructions->show();
+}
+
 void ramWindow::closeEvent(QCloseEvent *bar)
 {
-    //TODO: Window closes no matter what you click
     QMessageBox::StandardButton reply = QMessageBox::question(this, "Revert changes", "Are you sure you want to cancel and quit the RAM? The changes you've made will not be saved.");
     if (reply == QMessageBox::Yes)
     {
@@ -151,6 +164,7 @@ void ramWindow::closeEvent(QCloseEvent *bar)
             table->cellWidget(row, 0)->setProperty("value", currentRAM[row]);
         }
         bar->accept();
+        instructions->hide();
     }
     else {
         bar->ignore();
