@@ -583,14 +583,14 @@ void CPU::nextStep()
     int write = 0;
     bool enable[9];
     enable[0] = microcode->currentMROM[currentRow][3]; //ir
-    enable[1] = microcode->currentMROM[currentRow][4]; //pc
-    enable [2] = microcode->currentMROM[currentRow][6]; //a
-    enable[3] = microcode->currentMROM[currentRow][8]; //x
-    enable[4] = microcode->currentMROM[currentRow][9]; //y
-    enable[5] = microcode->currentMROM[currentRow][10]; //z
-    enable[6] = microcode->currentMROM[currentRow][12]; //mar
-    enable[7] = microcode->currentMROM[currentRow][14]; //mdrin
-    enable[8] = microcode->currentMROM[currentRow][16]; //mdrout
+    enable[1] = microcode->currentMROM[currentRow][5]; //pc
+    enable [2] = microcode->currentMROM[currentRow][7]; //a
+    enable[3] = microcode->currentMROM[currentRow][9]; //x
+    enable[4] = microcode->currentMROM[currentRow][10]; //y
+    enable[5] = microcode->currentMROM[currentRow][11]; //z
+    enable[6] = microcode->currentMROM[currentRow][13]; //mar
+    enable[7] = microcode->currentMROM[currentRow][15]; //mdrin
+    enable[8] = microcode->currentMROM[currentRow][17]; //mdrout
 
 
     write = microcode->currentMROM[currentRow][3] * 256 + microcode->currentMROM[currentRow][4] * 128
@@ -600,28 +600,28 @@ void CPU::nextStep()
             + microcode->currentMROM[currentRow][16] * 1;
 
     if (microcode->currentMROM[currentRow][3]) instructionReg->setText(busButton->text()); //instruction register
-    if (microcode->currentMROM[currentRow][4]) progCounter->setText(busButton->text()); //program counter
-    if (microcode->currentMROM[currentRow][6]) aReg->setText(busButton->text()); // a register
-    if (microcode->currentMROM[currentRow][8]) xReg->setText(busButton->text()); // x register
-    if (microcode->currentMROM[currentRow][9]) yReg->setText(busButton->text()); // y register
-   //TODO: if (microcode->currentMROM[currentRow][10]) zReg->setText(ALU RESULT); //z register
-    if (microcode->currentMROM[currentRow][12]) marReg->setText(busButton->text()); // mar register
-//    if (microcode->currentMROM[currentRow][14]) mdrInReg->setText(DATA IN EXTERNAL RAM AT MAR); // mdr in register
-    if (microcode->currentMROM[currentRow][16]) mdrOutReg->setText(busButton->text()); // mdr out register
+    if (microcode->currentMROM[currentRow][5]) progCounter->setText(busButton->text()); //program counter
+    if (microcode->currentMROM[currentRow][7]) aReg->setText(busButton->text()); // a register
+    if (microcode->currentMROM[currentRow][9]) xReg->setText(busButton->text()); // x register
+    if (microcode->currentMROM[currentRow][10]) yReg->setText(busButton->text()); // y register
+   //TODO: if (microcode->currentMROM[currentRow][11]) zReg->setText(ALU RESULT); //z register
+    if (microcode->currentMROM[currentRow][13]) marReg->setText(busButton->text()); // mar register
+//    if (microcode->currentMROM[currentRow][15]) mdrInReg->setText(DATA IN EXTERNAL RAM AT MAR); // mdr in register
+    if (microcode->currentMROM[currentRow][17]) mdrOutReg->setText(busButton->text()); // mdr out register
 
     ///Output Enable
 
-    if (microcode->currentMROM[currentRow][5]) busButton->setText(progCounter->text());
-    if (microcode->currentMROM[currentRow][7]) busButton->setText(aReg->text());
-    if (microcode->currentMROM[currentRow][11]) busButton->setText(zReg->text());
-    if (microcode->currentMROM[currentRow][13]) busButton->setText(marReg->text());
-    if (microcode->currentMROM[currentRow][15]) busButton->setText(mdrInReg->text());
-//    if (microcode->currentMROM[currentRow][17]) GIVE MDROUT TO EXTERNAL RAM
+    if (microcode->currentMROM[currentRow][4]) busButton->setText(instructionReg->text());
+    if (microcode->currentMROM[currentRow][6]) busButton->setText(progCounter->text());
+    if (microcode->currentMROM[currentRow][8]) busButton->setText(aReg->text());
+    if (microcode->currentMROM[currentRow][12]) busButton->setText(zReg->text());
+    if (microcode->currentMROM[currentRow][14]) busButton->setText(marReg->text());
+    if (microcode->currentMROM[currentRow][16]) busButton->setText(mdrInReg->text());
+//    if (microcode->currentMROM[currentRow][18]) GIVE MDROUT TO EXTERNAL RAM
 
     //TODO: memorize enabled registers for color change
     //TODO: output enable conflict if more than one is active
     //TODO: mem.r/-w and mem.en
-    //TODO: add ir.oe
 
     this->update(); //update colors for writeEnable/outputEnable
 
