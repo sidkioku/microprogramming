@@ -4,8 +4,8 @@
 microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 {
     this->setWindowTitle("Microcode ROM");
-    table = new QTableWidget(100, 19, this);
-    hLabels << "next" << "cond" << "alu.opcode" << "ir.we" << "pc.we" << "pc.oe" << "a.we" << "a.oe" << "x.we" << "y.we" << "z.we" << "z.oe" <<
+    table = new QTableWidget(100, 20, this);
+    hLabels << "next" << "cond" << "alu.opcode" << "ir.we" << "ir.oe"<< "pc.we" << "pc.oe" << "a.we" << "a.oe" << "x.we" << "y.we" << "z.we" << "z.oe" <<
                "mar.we" << "mar.oe" << "mdrin.we" << "mdrin.oe" << "mdrout.we" << "mem.r/-w" << "mem.en";
     table->setHorizontalHeaderLabels(hLabels);
 
