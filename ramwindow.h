@@ -14,7 +14,8 @@ public:
     ~ramWindow();
     QString saveRam();
     void readRam(QString *text);
-    int  currentRAM[16];
+    int  currentRAM[2000][4];
+    int getMicrocodeRow(int opcode);
 
 private:
     QTableWidget *table;
@@ -23,7 +24,8 @@ private:
     QPushButton *applyButton;
     QPushButton *cancelButton;
     QPushButton *resetButton;
-    machineCode *instructions;
+    instructionSet *instructions;
+    QStringList hLabels;
     int  tempRAM[16];
     void closeEvent(QCloseEvent *bar);
 

@@ -8,21 +8,26 @@
 #include <QHBoxLayout>
 #include <QTableWidget>
 #include <QSpinBox>
+#include <QHeaderView>
 
-class machineCode : public QWidget
+class instructionSet : public QWidget
 {
     Q_OBJECT
 public:
-    explicit machineCode(QWidget *parent = nullptr);
+    explicit instructionSet(QWidget *parent = nullptr);
+    std::vector<std::vector<QString>> currentInstructions;
 
 private:
-    QTableWidget *instructionSet;
-//    QPushButton *okButton;
-//    QPushButton *cancelButton;
+    QTableWidget *instructionsTable;
+    QPushButton *okButton;
+    QPushButton *cancelButton;
+    QPushButton *addRowButton;
     QStringList hLabels;
 
 private slots:
-    void cellChanged(int value);
+    void addRow();
+    void ok();
+    void cancel();
 };
 
 #endif // MACHINECODE_H

@@ -8,24 +8,30 @@
 #include <QHeaderView>
 #include <QSpinBox>
 #include <QCloseEvent>
+#include <algorithm>
 
 ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
 {
-    instructions = new machineCode();
+    instructions = new instructionSet();
     this->setWindowTitle("External Random Access Memory (RAM)");
-    table = new QTableWidget(16, 1, this);
-    table->horizontalHeader()->hide();
+    table = new QTableWidget(2000, 4, this);
+    hLabels << "Operation Code" << "Register 1" << "Register 2" << "Register 3";
+    table->setHorizontalHeaderLabels(hLabels);
     table->verticalHeader()->hide();
-    for (int row = 0; row < table->rowCount(); row++)
-    {
-        QSpinBox *spinBox = new QSpinBox(this);
-        spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
-        spinBox->setDisplayIntegerBase(2);
-        spinBox->setMaximum(65535);
-        spinBox->setMinimum(0);
-        connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
-        table->setCellWidget(row, 0, spinBox);
+    for (int column = 0; column < table->columnCount(); column++) {
+        for (int row = 0; row < table->rowCount(); row++)
+        {
+            QSpinBox *spinBox = new QSpinBox(this);
+            spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
+            spinBox->setDisplayIntegerBase(16);
+            spinBox->setMaximum(255);
+            spinBox->setMinimum(0);
+            spinBox->setPrefix("0x");
+            connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
+            table->setCellWidget(row, column, spinBox);
+        }
     }
+
 
     table->setSortingEnabled(false);
     table->resizeColumnsToContents();
@@ -67,6 +73,7 @@ ramWindow::~ramWindow()
 
 QString ramWindow::saveRam()
 {
+    //TODO: Save Instruction Set
     QString text = QStringLiteral("%1\n\n").arg(table->rowCount());
 
     for (int row = 0; row < table->rowCount(); row++)
@@ -80,21 +87,38 @@ QString ramWindow::saveRam()
 
 void ramWindow::readRam(QString *text)
 {
+    //TODO: Read Instruction Set
     table->clear();
     QStringList lines = text->split("\n", Qt::SkipEmptyParts);
     table->setRowCount(lines[0].toInt());
 
     for (int row = 0; row < table->rowCount(); row++)
     {
-        QSpinBox *spinBox = new QSpinBox(this);
-        spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
-        spinBox->setDisplayIntegerBase(2);
-        spinBox->setMaximum(65535);
-        spinBox->setMinimum(0);
-        spinBox->setValue(lines[row + 1].toInt());
-        connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
-        table->setCellWidget(row, 0, spinBox);
+        for (int column = 0; column < table->columnCount(); column++)
+        {
+            QSpinBox *spinBox = new QSpinBox(this);
+            spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
+            spinBox->setDisplayIntegerBase(16);
+            spinBox->setMaximum(255);
+            spinBox->setMinimum(0);
+            spinBox->setValue(lines[row + 1].toInt());
+            connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
+            table->setCellWidget(row, column, spinBox);
+        }
+
     }
+}
+
+int ramWindow::getMicrocodeRow(int opcode)
+{
+    for (int row = 0; row < instructions->currentInstructions.size(); row++)
+    {
+        if (instructions->currentInstructions[row][0] == opcode)
+        {
+            return instructions->currentInstructions[row][3].toInt(nullptr, 10);
+        }
+    }
+    return 0;
 }
 
 
@@ -106,11 +130,16 @@ void ramWindow::ok()
 
 void ramWindow::apply()
 {
+    //TODO: Save Instruction Set
     for (int row = 0; row < table->rowCount(); row++)
     {
+        for (int column = 0; column < table->columnCount(); column++)
+        {
             bool converted = true;
-            currentRAM[row] = table->cellWidget(row, 0)->property("value").toInt(&converted);
-            if (!converted) currentRAM[row] = 0;
+            currentRAM[row][column] = table->cellWidget(row, column)->property("value").toInt(&converted);
+            if (!converted) currentRAM[row][column] = 0;
+
+        }
     }
     applyButton->setDisabled(true);
 }
@@ -122,7 +151,10 @@ void ramWindow::cancel()
     {
         for (int row = 0; row < table->rowCount(); row++)
         {
-            table->cellWidget(row, 0)->setProperty("value", currentRAM[row]);
+            for(int column = 0; column < table->columnCount(); column++)
+            {
+                table->cellWidget(row, column)->setProperty("value", currentRAM[row][column]);
+            }
         }
         this->hide();
     }
@@ -135,8 +167,12 @@ void ramWindow::reset()
     {
         for (int row = 0; row < table->rowCount(); row++)
         {
-                table->cellWidget(row, 0)->setProperty("value", 0);
-                currentRAM[row] = 0;
+            for (int column = 0; column < table->columnCount(); column ++)
+            {
+                table->cellWidget(row, column)->setProperty("value", 0);
+                currentRAM[row][column] = 0;
+
+            }
         }
         resetButton->setDisabled(true);
         applyButton->setDisabled(true);
@@ -161,8 +197,12 @@ void ramWindow::closeEvent(QCloseEvent *bar)
     {
         for (int row = 0; row < table->rowCount(); row++)
         {
-            table->cellWidget(row, 0)->setProperty("value", currentRAM[row]);
+            for(int column = 0; column < table->columnCount(); column++)
+            {
+                table->cellWidget(row, column)->setProperty("value", currentRAM[row][column]);
+            }
         }
+        this->hide();
         bar->accept();
         instructions->hide();
     }

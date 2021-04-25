@@ -1,5 +1,5 @@
 #include "microcoderom.h"
-
+#include "cpu.h"
 
 microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 {
@@ -9,9 +9,10 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
                "mar.we"  << "mdrin.we" << "mdrin.oe" << "mdrout.we" << "mdrout.oe" << "mem.r/-w" << "mem.en";
     table->setHorizontalHeaderLabels(hLabels);
 
-    for (int column = 0; column < table->columnCount(); column++)
+    for (int row = 0; row < table->rowCount(); row++)
     {
-        for (int row = 0; row < table->rowCount(); row++)
+        vLabels << QString::number(row);
+        for (int column = 0; column < table->columnCount(); column++)
         {
             QSpinBox *spinBox = new QSpinBox(this);
             spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
@@ -26,7 +27,7 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
                 spinBox->setMinimum(0);
                 break;
             case 2:
-                spinBox->setMaximum(6); //ALU Operations: ADD, SUB, SHIFTLEFT, SHIFTRIGHT, PASS, COMPARE
+                spinBox->setMaximum(7); //ALU Operations: ADD, SUB, SHIFTLEFT, SHIFTRIGHT, PASS, INCREMENT, DECREMENT
                 break;
             default:
                 spinBox->setMaximum(1);
@@ -36,7 +37,7 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
             table->setCellWidget(row, column, spinBox);
         }
     }
-
+    table->setVerticalHeaderLabels(vLabels);
     table->setSortingEnabled(false);
     table->resizeColumnsToContents();
     this->resize(950, 500);
@@ -67,7 +68,7 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 
     QHBoxLayout *vLayout = new QHBoxLayout();
     QVBoxLayout *buttonsLayout = new QVBoxLayout();
-    QLabel *aluInfo = new QLabel("ALU Operations\nDO NOTHING: 0\nADD: 1\nSUB: 10\nSHIFT LEFT: 11\nSHIFT RIGHT: 100\nPASS: 101\nCOMPARE: 110");
+    QLabel *aluInfo = new QLabel("ALU Operations\nDO NOTHING: 0\nX + Y: 1\nX - Y: 10\nSHIFT X LEFT: 11\nSHIFT X RIGHT: 100\nPASS X: 101\nINCREMENT X: 110\nDECREMENT X: 111");
     buttonsLayout->addWidget(aluInfo);
     buttonsLayout->addStretch();
     buttonsLayout->addWidget(resetButton);
@@ -137,7 +138,7 @@ void microcodeROM::readRom(QString *text)
                 break;
             case 2:
                 //ALU Operations
-                spinBox->setMaximum(6); //ADD, SUB, SHIFTLEFT, SHIFTRIGHT, PASS, COMPARE (in this order)
+                spinBox->setMaximum(8); //ADD, SUB, SHIFTLEFT, SHIFTRIGHT, PASS, COMPARE, INCREMENT, DECREMENT (in this order)
                 break;
             default:
                 spinBox->setMaximum(32);
@@ -147,20 +148,13 @@ void microcodeROM::readRom(QString *text)
             table->setCellWidget(row, column, spinBox);
         }
     }
+    apply();
 }
 
 
 void microcodeROM::ok()
 {
-    for (int row = 0; row < table->rowCount(); row++)
-    {
-        for (int column = 0; column < table->columnCount(); column++)
-        {
-            bool converted = true;
-            currentMROM[row][column] = table->cellWidget(row, column)->property("value").toInt(&converted);
-            if (!converted) currentMROM[row][column] = 0;
-        }
-    }
+    apply();
     this->hide();
 }
 
@@ -224,11 +218,11 @@ void microcodeROM::addRow()
             currentMROM[row][col] = 0;
         }
     }
-    for (int j = 0; j < table->columnCount(); j++)
+    for (int col = 0; col < table->columnCount(); col++)
     {
         QSpinBox *spinBox = new QSpinBox(this);
         spinBox->setDisplayIntegerBase(2);
-        switch (j) {
+        switch (col) {
         case 0:
             spinBox->setMaximum(table->rowCount());
             spinBox->setMinimum(0);
@@ -238,13 +232,13 @@ void microcodeROM::addRow()
             spinBox->setMinimum(0);
             break;
         case 2:
-            spinBox->setMaximum(6); //ALU Operations: ADD, SUB, SHIFTLEFT, SHIFTRIGHT, PASS, COMPARE
+            spinBox->setMaximum(8); //ALU Operations: ADD, SUB, SHIFTLEFT, SHIFTRIGHT, PASS, COMPARE, INCREMENT, DECREMENT
             break;
         default:
             spinBox->setMaximum(32);
         }
         connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &microcodeROM::cellChanged);
-        table->setCellWidget(table->rowCount() - 1, j, spinBox);
+        table->setCellWidget(table->rowCount() - 1, col, spinBox);
     }
 }
 

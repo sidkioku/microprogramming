@@ -10,5 +10,9 @@
         <file>icons/arrowLeft.png</file>
         <file>icons/arrowRight.png</file>
         <file>icons/arrowUp.png</file>
+        <file>icons/arrowDownRed.png</file>
+        <file>icons/arrowLeftRed.png</file>
+        <file>icons/arrowRightRed.png</file>
+        <file>icons/arrowUpRed.png</file>
     </qresource>
 </RCC>

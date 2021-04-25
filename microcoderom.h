@@ -31,6 +31,7 @@ private:
     QPushButton *resetButton;
     QPushButton *addRowButton;
     QStringList hLabels;
+    QStringList vLabels;
     std::vector<std::vector<int>> tempMROM;
     void closeEvent(QCloseEvent *bar);
 

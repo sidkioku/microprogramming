@@ -28,21 +28,16 @@ private:
     ramWindow *ram;
     QPushButton *romButton;
     int currentRow;
+    int currentInstruction;
 
     QFrame *bus;
     QFrame *data;
 
-    QPushButton *gpioIn1;
-    QPushButton *gpioIn2;
-
-    QPushButton *gpioOut1;
-    QPushButton *gpioOut2;
-    QPushButton *gpioOut3;
 
     QFrame *leftBorder;
     QFrame *rightBorder;
 
-    QPushButton *playpauseButton;
+    QPushButton *nextInstructionButton;
     QIcon *playIcon;
     QIcon *pauseIcon;
     QPushButton *nextStepButton;
@@ -63,8 +58,6 @@ private:
     QPushButton *aluButton;
     QPushButton *comparisons;
     QPushButton *zReg;
-
-    QPushButton *romRam;
 
     QPushButton *marReg;
     QPushButton *mdrInReg;
@@ -88,7 +81,7 @@ protected:
     void paintEvent(QPaintEvent *e);
 private slots:
     void microcodeOpen();
-    void playPause(bool checked);
+    void nextInstruction();
     void nextStep();
     void reset();
     void irExp();
