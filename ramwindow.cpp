@@ -1,23 +1,14 @@
 #include "ramwindow.h"
-#include <QListWidget>
-#include <QListWidgetItem>
-#include <QVBoxLayout>
-#include <QPushButton>
-#include <QMessageBox>
-#include <QTableWidget>
-#include <QHeaderView>
-#include <QSpinBox>
-#include <QCloseEvent>
-#include <algorithm>
 
 ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
 {
     instructions = new instructionSet();
     this->setWindowTitle("External Random Access Memory (RAM)");
-    table = new QTableWidget(2000, 4, this);
+    table = new QTableWidget(2048, 4, this);
     hLabels << "Operation Code" << "Register 1" << "Register 2" << "Register 3";
     table->setHorizontalHeaderLabels(hLabels);
     table->verticalHeader()->hide();
+    table->setSelectionMode(QAbstractItemView::SingleSelection);
     for (int column = 0; column < table->columnCount(); column++) {
         for (int row = 0; row < table->rowCount(); row++)
         {
@@ -46,10 +37,13 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
     applyButton->setCursor(Qt::PointingHandCursor);
     resetButton->setCursor(Qt::PointingHandCursor);
 
+    currentByte = new QLabel("Current Address: ");
+
     QVBoxLayout *vLayout = new QVBoxLayout();
     QHBoxLayout *hLayout = new QHBoxLayout();
     vLayout->addWidget(machineCodeButton);
     vLayout->addStretch();
+    vLayout->addWidget(currentByte);
     vLayout->addWidget(resetButton);
     vLayout->addWidget(okButton);
     vLayout->addWidget(applyButton);
@@ -64,6 +58,7 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
     connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancel()));
     connect(resetButton, SIGNAL(clicked()), this, SLOT(reset()));
     connect(machineCodeButton, SIGNAL(clicked()), this, SLOT(machineCodeWindow()));
+    connect(table, SIGNAL(itemSelectionChanged()), this, SLOT(byte()));
 }
 
 ramWindow::~ramWindow()
@@ -73,27 +68,49 @@ ramWindow::~ramWindow()
 
 QString ramWindow::saveRam()
 {
-    //TODO: Save Instruction Set
-    QString text = QStringLiteral("%1\n\n").arg(table->rowCount());
+    QString text = QString("%1\n").arg(table->rowCount());
 
     for (int row = 0; row < table->rowCount(); row++)
     {
-        text.append(table->cellWidget(row, 0)->property("value").toString());
+        for (int col = 0; col < table->columnCount(); col++)
+        {
+            if (currentRAM[row][col] == 0) text.append("0");
+            else text.append(currentRAM[row][col]);
+            text.append("\t");
+        }
         text.append("\n");
     }
 
+    QString instructionSetInfo = QString("%1").arg(instructions->instructionsTable->rowCount());
+    qDebug() << instructionSetInfo;
+    text.append(instructionSetInfo);
+    text.append("\n");
+
+    for(int row = 0; row < instructions->instructionsTable->rowCount(); row++)
+    {
+        for (int col = 0; col < 3; col++)
+        {
+
+            text.append(instructions->currentInstructions[row][col]);
+            text.append("\t");
+        }
+        text.append("\n");
+    }
+    qDebug() << text;
     return text;
 }
 
 void ramWindow::readRam(QString *text)
 {
-    //TODO: Read Instruction Set
     table->clear();
+    instructions->instructionsTable->clear();
     QStringList lines = text->split("\n", Qt::SkipEmptyParts);
-    table->setRowCount(lines[0].toInt());
-
-    for (int row = 0; row < table->rowCount(); row++)
+    int row = 0;
+    table->setRowCount(lines[row].toInt());
+    row++;
+    while (row <= table->rowCount())
     {
+        QStringList columns = lines[row].split("\t");
         for (int column = 0; column < table->columnCount(); column++)
         {
             QSpinBox *spinBox = new QSpinBox(this);
@@ -101,17 +118,46 @@ void ramWindow::readRam(QString *text)
             spinBox->setDisplayIntegerBase(16);
             spinBox->setMaximum(255);
             spinBox->setMinimum(0);
-            spinBox->setValue(lines[row + 1].toInt());
+            spinBox->setPrefix("0x");
+            spinBox->setValue(columns[column].toInt());
             connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
             table->setCellWidget(row, column, spinBox);
         }
-
+        row++;
     }
+    //<=2053 tablerowcount 2048 + instructionsrowcount 4 = 2052
+    instructions->instructionsTable->setRowCount(lines[row].toInt());
+    row++;
+    while (row <= table->rowCount() + instructions->instructionsTable->rowCount() + 1)
+    {
+        QStringList columns = lines[row].split("\t");
+
+        QSpinBox *opcode = new QSpinBox(this);
+        opcode->setInputMethodHints(Qt::ImhDigitsOnly);
+        opcode->setPrefix("0x");
+        opcode->setDisplayIntegerBase(16);
+        opcode->setMinimum(0);
+        opcode->setMaximum(255);
+        opcode->setValue(columns[0].toInt());
+        instructions->instructionsTable->setCellWidget(row, 0, opcode);
+
+
+        QTableWidgetItem *mnemonic = new QTableWidgetItem(columns[1]);
+        instructions->instructionsTable->setItem(row, 1, mnemonic);
+
+        QSpinBox *microcodeRow = new QSpinBox(this);
+        microcodeRow->setInputMethodHints(Qt::ImhDigitsOnly);
+        microcodeRow->setValue(columns[2].toInt());
+        instructions->instructionsTable->setCellWidget(row, 2, microcodeRow);
+
+        row++;
+    }
+
 }
 
 int ramWindow::getMicrocodeRow(int opcode)
 {
-    for (int row = 0; row < instructions->currentInstructions.size(); row++)
+    for (int row = 0; row < (int) instructions->currentInstructions.size(); row++)
     {
         if (instructions->currentInstructions[row][0] == opcode)
         {
@@ -130,14 +176,14 @@ void ramWindow::ok()
 
 void ramWindow::apply()
 {
-    //TODO: Save Instruction Set
     for (int row = 0; row < table->rowCount(); row++)
     {
         for (int column = 0; column < table->columnCount(); column++)
         {
             bool converted = true;
             currentRAM[row][column] = table->cellWidget(row, column)->property("value").toInt(&converted);
-            if (!converted) currentRAM[row][column] = 0;
+            qDebug() << currentRAM[row][column];
+            if (currentRAM[row][column]) currentRAM[row][column] = 0;
 
         }
     }
@@ -188,6 +234,17 @@ void ramWindow::cellChanged(int value)
 void ramWindow::machineCodeWindow()
 {
     instructions->show();
+}
+
+void ramWindow::byte()
+{
+    QItemSelectionModel *itemModel = table->selectionModel();
+    QModelIndexList indexList = itemModel->selectedIndexes();
+    if (indexList.isEmpty())  return;
+    int row = indexList.at(0).row();
+    int col = indexList.at(0).column();
+    int cell = row * 4 + col;
+    currentByte->setText(QString("Current Address: 0x%1").arg(cell, 4, 16, QChar('0')));
 }
 
 void ramWindow::closeEvent(QCloseEvent *bar)

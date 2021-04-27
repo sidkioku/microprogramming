@@ -24,9 +24,6 @@ bool writeenable[9];
 bool outputenable[9];
 
 
-
-//TODO: ALU has to be able to increment and decrement
-
 CPU::CPU(QWidget *parent) : QMainWindow(parent)
 {
     this->setWindowTitle("MicroCode Simulator");
@@ -762,8 +759,13 @@ void CPU::nextStep()
     if (microcode->currentMROM[currentRow][9]) xReg->setText(outputtext); // x register
     if (microcode->currentMROM[currentRow][10]) yReg->setText(outputtext); // y register
     if (microcode->currentMROM[currentRow][13]) marReg->setText(outputtext); // mar register
-//TODO:    if (microcode->currentMROM[currentRow][14])
-//        mdrInReg->setText(QString::number(ram->currentRAM[marReg->text().toInt(&converted, 10)])); // mdr in register
+    if (microcode->currentMROM[currentRow][14])
+    {
+        int address = marReg->text().toInt();
+        int row = address / 4;
+        int col = address % 4;
+        mdrInReg->setText(QString::number(ram->currentRAM[row][col])); // mdr in register
+    }
     if (microcode->currentMROM[currentRow][16]) mdrOutReg->setText(outputtext); // mdr out register
 
 
@@ -777,7 +779,10 @@ void CPU::nextStep()
             {
                 if (microcode->currentMROM[currentRow][14]) //mdrin.we
                 {
-//                TODO:    mdrInReg->setText(QString::number(ram->currentRAM[marReg->text().toInt()]));
+                  int address = marReg->text().toInt();
+                  int row = address / 4;
+                  int col = address % 4;
+                  mdrInReg->setText(QString::number(ram->currentRAM[row][col]));
                 }
             }
             else secondstepread = true;
@@ -787,7 +792,10 @@ void CPU::nextStep()
             {
                 if (microcode->currentMROM[currentRow][17])
                 {
-//TODO:                    ram->currentRAM[marReg->text().toInt(&converted, 2)] = mdrOutReg->text().toInt(&converted, 2);
+                    int address = marReg->text().toInt();
+                    int row = address / 4;
+                    int col = address % 4;
+                    mdrOutReg->setText(QString::number(ram->currentRAM[row][col], 2));
                 }
             }
             else secondstepwrite = true;

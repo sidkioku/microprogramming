@@ -16,14 +16,14 @@ class instructionSet : public QWidget
 public:
     explicit instructionSet(QWidget *parent = nullptr);
     std::vector<std::vector<QString>> currentInstructions;
+    QTableWidget *instructionsTable;
 
 private:
-    QTableWidget *instructionsTable;
     QPushButton *okButton;
     QPushButton *cancelButton;
     QPushButton *addRowButton;
     QStringList hLabels;
-
+    void closeEvent(QCloseEvent *event);
 private slots:
     void addRow();
     void ok();

@@ -5,6 +5,19 @@
 #include <QPushButton>
 #include <QListWidget>
 #include <QTableWidget>
+#include <QListWidget>
+#include <QListWidgetItem>
+#include <QVBoxLayout>
+#include <QPushButton>
+#include <QMessageBox>
+#include <QTableWidget>
+#include <QHeaderView>
+#include <QSpinBox>
+#include <QCloseEvent>
+#include <algorithm>
+#include <QLabel>
+#include <QDebug>
+#include <QAbstractItemView>
 #include "machinecode.h"
 class ramWindow : public QWidget
 {
@@ -14,8 +27,9 @@ public:
     ~ramWindow();
     QString saveRam();
     void readRam(QString *text);
-    int  currentRAM[2000][4];
+    int  currentRAM[2048][4];
     int getMicrocodeRow(int opcode);
+    QLabel *currentByte;
 
 private:
     QTableWidget *table;
@@ -38,6 +52,7 @@ private slots:
     void reset();
     void cellChanged(int value);
     void machineCodeWindow();
+    void byte();
 
 
 };
