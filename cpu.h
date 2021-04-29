@@ -12,7 +12,6 @@
 #include <QGroupBox>
 #include "microcoderom.h"
 #include "ramwindow.h"
-#include "machinecode.h"
 
 class CPU : public QMainWindow
 {

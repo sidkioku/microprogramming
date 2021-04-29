@@ -18,7 +18,9 @@
 #include <QLabel>
 #include <QDebug>
 #include <QAbstractItemView>
-#include "machinecode.h"
+#include <QSizePolicy>
+#include <QSplitter>
+
 class ramWindow : public QWidget
 {
     Q_OBJECT
@@ -30,15 +32,15 @@ public:
     int  currentRAM[2048][4];
     int getMicrocodeRow(int opcode);
     QLabel *currentByte;
+    std::vector<std::vector<QString>> currentInstructions;
 
 private:
-    QTableWidget *table;
-    QPushButton *machineCodeButton;
+    QTableWidget *ramTable;
+    QTableWidget *instructionsTable;
     QPushButton *okButton;
     QPushButton *applyButton;
     QPushButton *cancelButton;
     QPushButton *resetButton;
-    instructionSet *instructions;
     QStringList hLabels;
     int  tempRAM[16];
     void closeEvent(QCloseEvent *bar);
@@ -51,8 +53,8 @@ private slots:
     void cancel();
     void reset();
     void cellChanged(int value);
-    void machineCodeWindow();
     void byte();
+    void addMnemonic();
 
 
 };

@@ -1,6 +1,6 @@
-#include "microcoderom.h"
 #include "cpu.h"
-
+#include "microcoderom.h"
+#include <QHeaderView>
 microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 {
     this->setWindowTitle("Microcode ROM");
@@ -9,6 +9,8 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
                "mar.we"  << "mdrin.we" << "mdrin.oe" << "mdrout.we" << "mdrout.oe" << "mem.r/-w" << "mem.en";
     table->setHorizontalHeaderLabels(hLabels);
 
+    QHeaderView *header = table->horizontalHeader();
+    header->setSectionResizeMode(QHeaderView::Stretch);
     for (int row = 0; row < table->rowCount(); row++)
     {
         vLabels << QString::number(row);

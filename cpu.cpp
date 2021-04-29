@@ -807,6 +807,7 @@ void CPU::nextStep()
 
 void CPU::reset()
 {
+    //TODO: set current row correctly
     currentRow = 0;
     currentInstruction = 0;
     quint32 value = QRandomGenerator::global()->bounded(127);
