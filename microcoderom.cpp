@@ -8,7 +8,7 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
     hLabels << "next" << "cond" << "alu.opcode" << "ir.we" << "ir.oe"<< "pc.we" << "pc.oe" << "a.we" << "a.oe" << "x.we" << "y.we" << "z.we" << "z.oe" <<
                "mar.we"  << "mdrin.we" << "mdrin.oe" << "mdrout.we" << "mdrout.oe" << "mem.r/-w" << "mem.en";
     table->setHorizontalHeaderLabels(hLabels);
-
+    table->setShowGrid(false);
     QHeaderView *header = table->horizontalHeader();
     header->setSectionResizeMode(QHeaderView::Stretch);
     for (int row = 0; row < table->rowCount(); row++)
@@ -34,9 +34,9 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
             default:
                 spinBox->setMaximum(1);
             }
-            //   spinBox->setValue(0);
             connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &microcodeROM::cellChanged);
             table->setCellWidget(row, column, spinBox);
+            if (row % 2 == 0) spinBox->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");
         }
     }
     table->setVerticalHeaderLabels(vLabels);
@@ -120,6 +120,7 @@ void microcodeROM::readRom(QString *text)
     table->setHorizontalHeaderLabels(lines[1].split("\t", Qt::SkipEmptyParts));
     for (int row = 0; row < table->rowCount(); row++)
     {
+        vLabels << QString::number(row);
         QStringList line = lines[row + 2].split("\t", Qt::SkipEmptyParts);
         for (int column = 0; column < table->columnCount(); column++)
         {
@@ -150,7 +151,9 @@ void microcodeROM::readRom(QString *text)
             table->setCellWidget(row, column, spinBox);
         }
     }
+    table->setVerticalHeaderLabels(vLabels);
     apply();
+    resetButton->setEnabled(true);
 }
 
 

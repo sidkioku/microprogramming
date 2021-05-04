@@ -10,6 +10,22 @@
 #include <QMessageBox>
 #include <QtCore>
 #include <QGroupBox>
+#include <QLabel>
+#include <QPainter>
+#include <QPen>
+#include <QThread>
+#include <QCloseEvent>
+#include <QPalette>
+#include <QCheckBox>
+#include <QFileDialog>
+#include <QDir>
+#include <QRandomGenerator>
+#include <QTableWidgetItem>
+#include <QMessageBox>
+#include <QTableWidget>
+#include <vector>
+#include <algorithm>
+#include <iostream>
 #include "microcoderom.h"
 #include "ramwindow.h"
 
@@ -48,7 +64,10 @@ private:
 
     QPushButton *ramButton;
 
-    QPushButton *instructionReg;
+    QPushButton *instructionRegOpcode;
+    QPushButton *instructionReg1;
+    QPushButton *instructionReg2;
+    QPushButton *instructionReg3;
     QPushButton *progCounter;
     QPushButton *aReg;
 

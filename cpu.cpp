@@ -1,27 +1,14 @@
 #include "cpu.h"
 
-#include <QLabel>
-#include <QPainter>
-#include <QPen>
-#include <QThread>
-#include <QCloseEvent>
-#include <QPalette>
-#include <QCheckBox>
-#include <QFileDialog>
-#include <QDir>
-#include <QRandomGenerator>
-#include <QTableWidgetItem>
-#include <QMessageBox>
-#include <QTableWidget>
-#include <vector>
-#include <algorithm>
-#include <iostream>
+#include <QMenu>
+#include <QMenuBar>
 #include "ramwindow.h"
 
 bool secondstepread = false;
 bool secondstepwrite = false;
 bool writeenable[9];
 bool outputenable[9];
+QRandomGenerator *generator = new QRandomGenerator();
 
 
 CPU::CPU(QWidget *parent) : QMainWindow(parent)
@@ -53,7 +40,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     font.setUnderline(true);
     ramButton->setFont(font);
     ramButton->setMinimumSize(100, 600);
-    ramButton->setStyleSheet("border: 2px solid black;");
+    ramButton->setStyleSheet("border: 3px solid black;");
 
     data = new QFrame();
     data->setFrameShape(QFrame::HLine);
@@ -83,44 +70,65 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
 
     irLabel = new QLabel("Instruction Register");
     irLabel->setAlignment(Qt::AlignCenter);
-    instructionReg = new QPushButton("0000000");
-    instructionReg->setStyleSheet("border: 2px solid black;");
-    instructionReg->setCursor(Qt::WhatsThisCursor);
-    instructionReg->setMinimumSize(150, 23);
+    instructionRegOpcode = new QPushButton("0x00");
+    instructionRegOpcode->setStyleSheet("border: 3px solid black; border-right: 1px solid black;");
+    instructionRegOpcode->setCursor(Qt::WhatsThisCursor);
+    instructionRegOpcode->setMinimumSize(25, 23);
 
+    instructionReg1 = new QPushButton("0x00");
+    instructionReg1->setStyleSheet("border: 3px solid black; border-left: 0px; border-right: 1px solid black;");
+    instructionReg1->setCursor(Qt::WhatsThisCursor);
+    instructionReg1->setMinimumSize(25, 23);
+
+    instructionReg2 = new QPushButton("0x00");
+    instructionReg2->setStyleSheet("border: 3px solid black; border-left: 0px; border-right: 1px solid black;");
+    instructionReg2->setCursor(Qt::WhatsThisCursor);
+    instructionReg2->setMinimumSize(25, 23);
+    instructionReg3 = new QPushButton("0x00");
+    instructionReg3->setStyleSheet("border: 3px solid black; border-left: 0px");
+    instructionReg3->setCursor(Qt::WhatsThisCursor);
+    instructionReg3->setMinimumSize(25, 23);
+
+    QHBoxLayout *instruction = new QHBoxLayout();
+    instruction->addWidget(instructionRegOpcode);
+    instruction->addWidget(instructionReg1);
+    instruction->addWidget(instructionReg2);
+    instruction->addWidget(instructionReg3);
+    instruction->setSpacing(0);
     playIcon = new QIcon(":/playpause/icons/playIcon");
     pauseIcon = new QIcon(":/playpause/icons/pauseIcon");
     nextInstructionButton = new QPushButton(*playIcon, "Play", this);
     nextInstructionButton->setCheckable(true);
     nextInstructionButton->setChecked(false);
     nextInstructionButton->setEnabled(false);
-    nextInstructionButton->setMinimumSize(150, 23);
+    nextInstructionButton->setMinimumSize(100, 23);
     nextStepButton = new QPushButton("Next Step");
     nextStepButton->setDisabled(true);
-    nextStepButton->setMinimumSize(150, 23);
+    nextStepButton->setMinimumSize(100, 23);
     resetButton = new QPushButton("Reset");
-    resetButton->setMinimumSize(150, 23);
+    resetButton->setMinimumSize(100, 23);
     irLayout->addSpacing(20);
     irLayout->addWidget(nextInstructionButton);
     irLayout->addWidget(nextStepButton);
     irLayout->addWidget(resetButton);
     irLayout->addStretch();
     irLayout->addWidget(irLabel);
-    irLayout->addWidget(instructionReg);
+    irLayout->addLayout(instruction);
 
 
     readMicrocode = new QPushButton("Read Microcode ROM...");
-    readMicrocode->setMinimumSize(150, 23);
+    readMicrocode->setMinimumSize(100, 23);
     readMicrocode->setCursor(Qt::PointingHandCursor);
     writeMicrocode = new QPushButton("Write Microcode ROM...");
-    writeMicrocode->setMinimumSize(150, 23);
+    writeMicrocode->setMinimumSize(100, 23);
     writeMicrocode->setCursor(Qt::PointingHandCursor);
     pcLabel = new QLabel("Program Counter");
     pcLabel->setAlignment(Qt::AlignCenter);
-    progCounter = new QPushButton("0000000");
-    progCounter->setStyleSheet("border: 2px solid black;");
+    progCounter = new QPushButton("0x00000000");
+    progCounter->setStyleSheet("border: 3px solid black;");
     progCounter->setCursor(Qt::WhatsThisCursor);
-    progCounter->setMinimumSize(150, 23);
+    progCounter->setMinimumSize(100, 23);
+
 
     pcLayout->addSpacing(20);
     pcLayout->addWidget(readMicrocode);
@@ -130,17 +138,17 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     pcLayout->addWidget(progCounter);
 
     readRAM = new QPushButton("Read RAM...");
-    readRAM->setMinimumSize(150, 23);
+    readRAM->setMinimumSize(100, 23);
     readRAM->setCursor(Qt::PointingHandCursor);
     writeRAM = new QPushButton("Write RAM...");
-    writeRAM->setMinimumSize(150, 23);
+    writeRAM->setMinimumSize(100, 23);
     writeRAM->setCursor(Qt::PointingHandCursor);
     aLabel = new QLabel("A Register");
     aLabel->setAlignment(Qt::AlignCenter);
-    aReg = new QPushButton("0000000");
-    aReg->setStyleSheet("border: 2px solid black;");
+    aReg = new QPushButton("0x00000000");
+    aReg->setStyleSheet("border: 3px solid black;");
     aReg->setCursor(Qt::WhatsThisCursor);
-    aReg->setMinimumSize(150, 23);
+    aReg->setMinimumSize(100, 23);
     aLayout->addSpacing(20);
     aLayout->addWidget(readRAM);
     aLayout->addWidget(writeRAM);
@@ -158,24 +166,24 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     ///Memory Access Registers
     marLabel = new QLabel("Memory Address Register");
     marLabel->setAlignment(Qt::AlignCenter);
-    marReg = new QPushButton("0000000");
+    marReg = new QPushButton("0x00000000");
     marReg->setCursor(Qt::WhatsThisCursor);
-    marReg->setStyleSheet("border: 2px solid black;");
-    marReg->setMinimumSize(150, 23);
+    marReg->setStyleSheet("border: 3px solid black;");
+    marReg->setMinimumSize(100, 23);
 
     mdrInLabel = new QLabel("Memory Data Register In");
     mdrInLabel->setAlignment(Qt::AlignCenter);
-    mdrInReg = new QPushButton("0000000");
+    mdrInReg = new QPushButton("0x00000000");
     mdrInReg->setCursor(Qt::WhatsThisCursor);
-    mdrInReg->setStyleSheet("border: 2px solid black;");
-    mdrInReg->setMinimumSize(150, 23);
+    mdrInReg->setStyleSheet("border: 3px solid black;");
+    mdrInReg->setMinimumSize(100, 23);
 
     mdrOutLabel = new QLabel("Memory Data Register Out");
     mdrOutLabel->setAlignment(Qt::AlignCenter);
-    mdrOutReg = new QPushButton("0000000");
+    mdrOutReg = new QPushButton("0x00000000");
     mdrOutReg->setCursor(Qt::WhatsThisCursor);
-    mdrOutReg->setStyleSheet("border: 2px solid black;");
-    mdrOutReg->setMinimumSize(150, 23);
+    mdrOutReg->setStyleSheet("border: 3px solid black;");
+    mdrOutReg->setMinimumSize(100, 23);
 
     memLayout->addSpacing(20);
     memLayout->addWidget(marLabel);
@@ -193,7 +201,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     romButton->setFont(font);
     romButton->setCursor(Qt::PointingHandCursor);
     romButton->setMinimumSize(100, 600);
-    romButton->setStyleSheet("border: 2px solid black;");
+    romButton->setStyleSheet("border: 3px solid black;");
 
     QVBoxLayout *romLayout = new QVBoxLayout();
     romLayout->addSpacing(20);
@@ -201,14 +209,9 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     romLayout->addStretch();
     QLabel *busLabel = new QLabel("Data Bus");
     busLabel->setAlignment(Qt::AlignCenter);
-    busButton = new QPushButton("00000000");
-    busButton->setStyleSheet("border: 2px solid black;");
-    busButton->setMinimumSize(150, 23);
-    busButton->setCursor(Qt::WhatsThisCursor);
-
-    busButton = new QPushButton("00000000");
-    busButton->setStyleSheet("border: 2px solid black;");
-    busButton->setMinimumSize(150, 23);
+    busButton = new QPushButton("0x00000000");
+    busButton->setStyleSheet("border: 3px solid black;");
+    busButton->setMinimumSize(100, 23);
     busButton->setCursor(Qt::WhatsThisCursor);
 
     QHBoxLayout *busLayout = new QHBoxLayout();
@@ -258,7 +261,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     connect(readRAM, SIGNAL(clicked()), this, SLOT(ramFile()));
     connect(writeRAM, SIGNAL(clicked()), this, SLOT(saveRam()));
     connect(progCounter, SIGNAL(clicked()), this, SLOT(pcExp()));
-    connect(instructionReg, SIGNAL(clicked()), this, SLOT(irExp()));
+    connect(instructionRegOpcode, SIGNAL(clicked()), this, SLOT(irExp()));
     connect(aReg, SIGNAL(clicked()), this, SLOT(aRegExp()));
     connect(marReg, SIGNAL(clicked()), this, SLOT(marExp()));
     connect(mdrInReg, SIGNAL(clicked()), this, SLOT(mdrInExp()));
@@ -285,20 +288,40 @@ void CPU::paintEvent(QPaintEvent *e)
     QIcon *arrowLeft = new QIcon(":/icons/arrowLeft.png");
     QIcon *arrowUp = new QIcon(":/icons/arrowUp.png");
     QIcon *arrowRight = new QIcon(":/icons/arrowRight.png");
-    redPen.setWidth(2);
-    blackPen.setWidth(2);
-    dashedPen.setWidth(1);
-    dashedRedPen.setWidth(1);
+    redPen.setWidth(4);
+    blackPen.setWidth(4);
+    dashedPen.setWidth(2);
+    dashedRedPen.setWidth(2);
     grayPen.setWidth(2);
     painter.setPen(blackPen);
 
     ///Arrows to the BUS
 
     //Arrow Instruction Register -> BUS
-    painter.drawLine(instructionReg->x() + instructionReg->width()/4, instructionReg->y() + instructionReg->height(), instructionReg->x() + instructionReg->width()/4, bus->y());
-    painter.drawLine(instructionReg->x() + 3*instructionReg->width()/4, instructionReg->y() + instructionReg->height(), instructionReg->x() + 3*instructionReg->width()/4, bus->y());
-    painter.drawPixmap(instructionReg->x() + instructionReg->width()/4 - 6, bus->y() - 11, arrowDown->pixmap(12, 12));
-    painter.drawPixmap(instructionReg->x() + 3 * instructionReg->width()/4 - 6, instructionReg->y() + instructionReg->height() - 1, arrowUp->pixmap(12, 12));
+    if(outputenable[0])
+    {
+        painter.setPen(redPen);
+        painter.drawPixmap(instructionRegOpcode->x() + instructionRegOpcode->width() - 9, bus->y() - 15, arrowDownRed->pixmap(18, 18));
+    }
+    else
+    {
+        painter.setPen(blackPen);
+        painter.drawPixmap(instructionRegOpcode->x() + instructionRegOpcode->width() - 9, bus->y() - 15, arrowDown->pixmap(18, 18));
+    }
+    painter.drawLine(instructionRegOpcode->x() + instructionRegOpcode->width(), instructionRegOpcode->y() + instructionRegOpcode->height(), instructionRegOpcode->x() + instructionRegOpcode->width(), bus->y());
+
+    //Arrow BUS -> Instruction Register
+    if (writeenable[0])
+    {
+        painter.setPen(redPen);
+        painter.drawPixmap(instructionReg2->x() + instructionReg2->width() - 9, instructionReg2->y() + instructionReg2->height() - 3, arrowUpRed->pixmap(18, 18));
+    }
+    else
+    {
+        painter.setPen(blackPen);
+        painter.drawPixmap(instructionReg2->x() + instructionReg2->width() - 9, instructionReg2->y() + instructionReg2->height() - 3, arrowUp->pixmap(18, 18));
+    }
+    painter.drawLine(instructionReg2->x() + instructionReg2->width(), instructionReg2->y() + instructionReg2->height(), instructionReg2->x() + instructionReg2->width(), bus->y());
 
 
 
@@ -307,24 +330,24 @@ void CPU::paintEvent(QPaintEvent *e)
     {
         painter.setPen(redPen);
         painter.drawLine(progCounter->x() + progCounter->width()/2,       progCounter->y() + progCounter->height(),       progCounter->x() + progCounter->width()/2,       bus->y());
-        painter.drawPixmap(progCounter->x() + progCounter->width()/2 - 6,       progCounter->y() + progCounter->height() -1, arrowUpRed->pixmap(12, 12));
+        painter.drawPixmap(progCounter->x() + progCounter->width()/2 - 9,       progCounter->y() + progCounter->height() - 3, arrowUpRed->pixmap(18, 18));
         painter.setPen(blackPen);
-        painter.drawPixmap(progCounter->x() + progCounter->width()/2 - 6,       bus->y() - 11, arrowDown->pixmap(12, 12));
+        painter.drawPixmap(progCounter->x() + progCounter->width()/2 - 9,       bus->y() - 15, arrowDown->pixmap(18, 18));
     }
     else if (outputenable[1])
     {
         painter.setPen(redPen);
         painter.drawLine(progCounter->x() + progCounter->width()/2,       progCounter->y() + progCounter->height(),       progCounter->x() + progCounter->width()/2,       bus->y());
-        painter.drawPixmap(progCounter->x() + progCounter->width()/2 - 6,       bus->y() - 11, arrowDownRed->pixmap(12, 12));
+        painter.drawPixmap(progCounter->x() + progCounter->width()/2 - 9,       bus->y() - 15, arrowDownRed->pixmap(18, 18));
         painter.setPen(blackPen);
-        painter.drawPixmap(progCounter->x() + progCounter->width()/2 - 6,       progCounter->y() + progCounter->height() -1, arrowUp->pixmap(12, 12));
+        painter.drawPixmap(progCounter->x() + progCounter->width()/2 - 9,       progCounter->y() + progCounter->height() - 3, arrowUp->pixmap(18, 18));
     }
     else
     {
         painter.setPen(blackPen);
         painter.drawLine(progCounter->x() + progCounter->width()/2,       progCounter->y() + progCounter->height(),       progCounter->x() + progCounter->width()/2,       bus->y());
-        painter.drawPixmap(progCounter->x() + progCounter->width()/2 - 6,       bus->y() - 11, arrowDown->pixmap(12, 12));
-        painter.drawPixmap(progCounter->x() + progCounter->width()/2 - 6,       progCounter->y() + progCounter->height() -1, arrowUp->pixmap(12, 12));
+        painter.drawPixmap(progCounter->x() + progCounter->width()/2 - 9,       bus->y() - 15, arrowDown->pixmap(18, 18));
+        painter.drawPixmap(progCounter->x() + progCounter->width()/2 - 9,       progCounter->y() + progCounter->height() - 3, arrowUp->pixmap(18, 18));
     }
 
     //Arrow A Register <-> BUS
@@ -332,80 +355,82 @@ void CPU::paintEvent(QPaintEvent *e)
     {
         painter.setPen(redPen);
         painter.drawLine(aReg->x() + aReg->width()/2,                     aReg->y() + aReg->height(),                     aReg->x() + aReg->width()/2,                     bus->y());
-        painter.drawPixmap(aReg->x() + aReg->width()/2 - 6,               aReg->y() + aReg->height(), arrowUpRed->pixmap(12, 12));
+        painter.drawPixmap(aReg->x() + aReg->width()/2 - 9,               aReg->y() + aReg->height() - 3, arrowUpRed->pixmap(18, 18));
         painter.setPen(blackPen);
-        painter.drawPixmap(aReg->x() + aReg->width()/2 - 6,                     bus->y() - 12, arrowDown->pixmap(12, 12));
+        painter.drawPixmap(aReg->x() + aReg->width()/2 - 9,                     bus->y() - 15, arrowDown->pixmap(18, 18));
     }
     else if (outputenable[2])
     {
         painter.setPen(redPen);
         painter.drawLine(aReg->x() + aReg->width()/2,                     aReg->y() + aReg->height(),                     aReg->x() + aReg->width()/2,                     bus->y());
-        painter.drawPixmap(aReg->x() + aReg->width()/2 - 6,                     bus->y() - 12, arrowDownRed->pixmap(12, 12));
+        painter.drawPixmap(aReg->x() + aReg->width()/2 - 9,                     bus->y() - 15, arrowDownRed->pixmap(18, 18));
         painter.setPen(blackPen);
-        painter.drawPixmap(aReg->x() + aReg->width()/2 - 6,               aReg->y() + aReg->height(), arrowUp->pixmap(12, 12));
+        painter.drawPixmap(aReg->x() + aReg->width()/2 - 9,               aReg->y() + aReg->height() - 3, arrowUp->pixmap(18, 18));
     }
     else
     {
         painter.setPen(blackPen);
         painter.drawLine(aReg->x() + aReg->width()/2,                     aReg->y() + aReg->height(),                     aReg->x() + aReg->width()/2,                     bus->y());
-        painter.drawPixmap(aReg->x() + aReg->width()/2 - 6,                     bus->y() - 12, arrowDown->pixmap(12, 12));
-        painter.drawPixmap(aReg->x() + aReg->width()/2 - 6,               aReg->y() + aReg->height(), arrowUp->pixmap(12, 12));
+        painter.drawPixmap(aReg->x() + aReg->width()/2 - 9,                     bus->y() - 15, arrowDown->pixmap(18, 18));
+        painter.drawPixmap(aReg->x() + aReg->width()/2 - 9,               aReg->y() + aReg->height() - 3, arrowUp->pixmap(18, 18));
     }
 
-    //Arrow X and Y Registers <- BUS
+    //Arrow BUS -> X Register
     if (writeenable[3]){
         painter.setPen(redPen);
         painter.drawLine(xReg->x() + xReg->width()/2,                     xReg->y() + xReg->height(),                     xReg->x() + xReg->width()/2,                     bus->y());
-        painter.drawPixmap(xReg->x() + xReg->width()/2 - 6,                     xReg->y() + xReg->height() - 1, arrowUpRed->pixmap(12,12));
+        painter.drawPixmap(xReg->x() + xReg->width()/2 - 9,                     xReg->y() + xReg->height() - 1, arrowUpRed->pixmap(18, 18));
     } else
     {
         painter.setPen(blackPen);
         painter.drawLine(xReg->x() + xReg->width()/2,                     xReg->y() + xReg->height(),                     xReg->x() + xReg->width()/2,                     bus->y());
-        painter.drawPixmap(xReg->x() + xReg->width()/2 - 6,                     xReg->y() + xReg->height() - 1, arrowUp->pixmap(12,12));
+        painter.drawPixmap(xReg->x() + xReg->width()/2 - 9,                     xReg->y() + xReg->height() - 1, arrowUp->pixmap(18, 18));
     }
+
+    //Arrow BUS -> Y Register
     if (writeenable[4])
     {
         painter.setPen(redPen);
         painter.drawLine(yReg->x() + yReg->width()/2,                     yReg->y() + yReg->height(),                     yReg->x() + yReg->width()/2,                     bus->y());
-        painter.drawPixmap(yReg->x() + yReg->width()/2 - 6,                     yReg->y() + yReg->height() - 1, arrowUpRed->pixmap(12, 12));
+        painter.drawPixmap(yReg->x() + yReg->width()/2 - 9,                     yReg->y() + yReg->height() - 1, arrowUpRed->pixmap(18, 18));
     }
     else
     {
         painter.setPen(blackPen);
         painter.drawLine(yReg->x() + yReg->width()/2,                     yReg->y() + yReg->height(),                     yReg->x() + yReg->width()/2,                     bus->y());
-        painter.drawPixmap(yReg->x() + yReg->width()/2 - 6,                     yReg->y() + yReg->height() - 1, arrowUp->pixmap(12, 12));
+        painter.drawPixmap(yReg->x() + yReg->width()/2 - 9,                     yReg->y() + yReg->height() - 1, arrowUp->pixmap(18, 18));
     }
     ///ALU Lines
 
     if (outputenable[5] & writeenable[5])
     {
         painter.setPen(redPen);
-        // Arrow X -> ALU Button
+        // Arrow X -> ALU Button Red
         painter.drawLine(xLabel->x() + xLabel->width()/2,                     xLabel->y(),                                      xLabel->x() + xLabel->width()/2,                     aluButton->y() + aluButton->height());
-        painter.drawPixmap(xLabel->x() + xLabel->width()/2 - 6,               aluButton->y() + aluButton->height() - 1,           arrowUpRed->pixmap(12, 12));
+        painter.drawPixmap(xLabel->x() + xLabel->width()/2 - 9,               aluButton->y() + aluButton->height() - 1,           arrowUpRed->pixmap(18, 18));
 
-        //Arrow Y -> ALU Button
+        //Arrow Y -> ALU Button Red
         painter.drawLine(yLabel->x() + yLabel->width()/2,                     yLabel->y(),                                      yLabel->x() + yLabel->width()/2,                     aluButton->y() + aluButton->height());
-        painter.drawPixmap( yLabel->x() + yLabel->width()/2 - 6,              aluButton->y() + aluButton->height() - 1,           arrowUpRed->pixmap(12, 12));
+        painter.drawPixmap( yLabel->x() + yLabel->width()/2 - 9,              aluButton->y() + aluButton->height() - 1,           arrowUpRed->pixmap(18, 18));
 
-        //Arrow ALU Button -> Z
+        //Arrow ALU Button -> Z Red
         painter.drawLine(aluButton->x() + aluButton->width()/2,           aluButton->y(),                                 zReg->x() + zReg->width()/2,                     zReg->y() + zReg->height());
-        painter.drawPixmap(zReg->x() + zReg->width()/2 - 6,                     zReg->y() + zReg->height() - 1, arrowUpRed->pixmap(12, 12));
+        painter.drawPixmap(zReg->x() + zReg->width()/2 - 9,                     zReg->y() + zReg->height() - 1, arrowUpRed->pixmap(18, 18));
 
     } else
     {
         painter.setPen(blackPen);
-        // Arrow X -> ALU Button
+        // Arrow X -> ALU Button Black
         painter.drawLine(xLabel->x() + xLabel->width()/2,                     xLabel->y(),                                      xLabel->x() + xLabel->width()/2,                     aluButton->y() + aluButton->height());
-        painter.drawPixmap(xLabel->x() + xLabel->width()/2 - 6,               aluButton->y() + aluButton->height() - 1,           arrowUp->pixmap(12, 12));
+        painter.drawPixmap(xLabel->x() + xLabel->width()/2 - 9,               aluButton->y() + aluButton->height() - 1,           arrowUp->pixmap(18, 18));
 
-        //Arrow Y -> ALU Button
+        //Arrow Y -> ALU Button Black
         painter.drawLine(yLabel->x() + yLabel->width()/2,                     yLabel->y(),                                      yLabel->x() + yLabel->width()/2,                     aluButton->y() + aluButton->height());
-        painter.drawPixmap( yLabel->x() + yLabel->width()/2 - 6,              aluButton->y() + aluButton->height() - 1,           arrowUp->pixmap(12, 12));
+        painter.drawPixmap( yLabel->x() + yLabel->width()/2 - 9,              aluButton->y() + aluButton->height() - 1,           arrowUp->pixmap(18, 18));
 
-        //Arrow ALU Button -> Z
+        //Arrow ALU Button -> Z Black
         painter.drawLine(aluButton->x() + aluButton->width()/2,           aluButton->y(),                                 zReg->x() + zReg->width()/2,                     zReg->y() + zReg->height());
-        painter.drawPixmap(zReg->x() + zReg->width()/2 - 6,                     zReg->y() + zReg->height() - 1, arrowUp->pixmap(12, 12));
+        painter.drawPixmap(zReg->x() + zReg->width()/2 - 9,                     zReg->y() + zReg->height() - 1, arrowUp->pixmap(18, 18));
 
     }
 
@@ -415,31 +440,31 @@ void CPU::paintEvent(QPaintEvent *e)
         painter.setPen(redPen);
         painter.drawLine(zReg->x() + zReg->width(),                       zReg->y() + zReg->height()/2,                   zReg->x() + zReg->width() + 100,    zReg->y() + zReg->height()/2);
         painter.drawLine(zReg->x() + zReg->width() + 100,    zReg->y() + zReg->height()/2,                   zReg->x() + zReg->width() + 100, bus->y());
-        painter.drawPixmap(zReg->x() + zReg->width() + 100 - 6, bus->y() - 10, arrowDownRed->pixmap(12, 12));
+        painter.drawPixmap(zReg->x() + zReg->width() + 100 - 9, bus->y() - 18, arrowDownRed->pixmap(18, 18));
     }
     else
     {
         painter.setPen(blackPen);
         painter.drawLine(zReg->x() + zReg->width(),                       zReg->y() + zReg->height()/2,                   zReg->x() + zReg->width() + 100,    zReg->y() + zReg->height()/2);
         painter.drawLine(zReg->x() + zReg->width() + 100,    zReg->y() + zReg->height()/2,                   zReg->x() + zReg->width() + 100, bus->y());
-        painter.drawPixmap(zReg->x() + zReg->width() + 100 - 6, bus->y() - 10, arrowDown->pixmap(12, 12));
+        painter.drawPixmap(zReg->x() + zReg->width() + 100 - 9, bus->y() - 18, arrowDown->pixmap(18, 18));
     }
 
-    //Arrow Comparisons -> Microcode ROM
     //TODO: Comparisons Arrows Change Colors?
+    //Arrow Comparisons -> Microcode ROM
     painter.setPen(blackPen);
     painter.drawLine(comparisons->x(), comparisons->y() + comparisons->height()/2, romButton->x() + romButton->width(), comparisons->y() + comparisons->height()/2);
-    painter.drawPixmap(romButton->x() + romButton->width(), comparisons->y() + comparisons->height()/2 - 6, arrowLeft->pixmap(12, 12));
+    painter.drawPixmap(romButton->x() + romButton->width(), comparisons->y() + comparisons->height()/2 - 9, arrowLeft->pixmap(18, 18));
 
     //Arrow Z -> Comparisons
     painter.drawLine(comparisons->x() + comparisons->width()/2, zReg->y() + zReg->height()/2, comparisons->x() + comparisons->width()/2, comparisons->y() + comparisons->height());
     painter.drawLine(comparisons->x() + comparisons->width()/2, zReg->y() + zReg->height()/2, zReg->x(), zReg->y() + zReg->height()/2);
-    painter.drawPixmap(comparisons->x() + comparisons->width()/2 - 6, comparisons->y() + comparisons->height() - 1, arrowUp->pixmap(12, 12));
+    painter.drawPixmap(comparisons->x() + comparisons->width()/2 - 9, comparisons->y() + comparisons->height() - 1, arrowUp->pixmap(18, 18));
 
     //Arrow IR -> Microcode ROM
-    painter.drawLine(instructionReg->x(), instructionReg->y() + instructionReg->height()/2, romButton->x() + 3 *romButton->width()/4,  instructionReg->y() + instructionReg->height()/2);
-    painter.drawLine(romButton->x() + 3 *romButton->width()/4, instructionReg->y() + instructionReg->height()/2, romButton->x() + 3 *romButton->width()/4, romButton->y() + romButton->height());
-    painter.drawPixmap(romButton->x() + 3 *romButton->width()/4 - 6, romButton->y() + romButton->height(), arrowUp->pixmap(12, 12));
+    painter.drawLine(instructionRegOpcode->x(), instructionRegOpcode->y() + instructionRegOpcode->height()/2, romButton->x() + 3 *romButton->width()/4,  instructionRegOpcode->y() + instructionRegOpcode->height()/2);
+    painter.drawLine(romButton->x() + 3 *romButton->width()/4, instructionRegOpcode->y() + instructionRegOpcode->height()/2, romButton->x() + 3 *romButton->width()/4, romButton->y() + romButton->height());
+    painter.drawPixmap(romButton->x() + 3 *romButton->width()/4 - 9, romButton->y() + romButton->height(), arrowUp->pixmap(18, 18));
 
     ///Memory Lines
     //Arrow MDR IN -> BUS
@@ -448,14 +473,14 @@ void CPU::paintEvent(QPaintEvent *e)
         painter.setPen(redPen);
         painter.drawLine(mdrInReg->x(),                                   mdrInReg->y() + mdrInReg->height()/2,           mdrInReg->x() - 60,             mdrInReg->y() + mdrInReg->height()/2);
         painter.drawLine(mdrInReg->x() - 60,            mdrInReg->y() + mdrInReg->height()/2,           mdrInReg->x() - 60,             bus->y());
-        painter.drawPixmap( mdrInReg->x() - 60 - 6,             bus->y() - 10, arrowDownRed->pixmap(12, 12));
+        painter.drawPixmap( mdrInReg->x() - 60 - 9,             bus->y() - 18, arrowDownRed->pixmap(18, 18));
     }
     else
     {
         painter.setPen(blackPen);
         painter.drawLine(mdrInReg->x(),                                   mdrInReg->y() + mdrInReg->height()/2,           mdrInReg->x() - 60,             mdrInReg->y() + mdrInReg->height()/2);
         painter.drawLine(mdrInReg->x() - 60,            mdrInReg->y() + mdrInReg->height()/2,           mdrInReg->x() - 60,             bus->y());
-        painter.drawPixmap( mdrInReg->x() - 60 - 6,             bus->y() - 10, arrowDown->pixmap(12, 12));
+        painter.drawPixmap( mdrInReg->x() - 60 - 9,             bus->y() - 18, arrowDown->pixmap(18, 18));
     }
 
     //Arrow BUS -> MDR OUT
@@ -464,14 +489,14 @@ void CPU::paintEvent(QPaintEvent *e)
         painter.setPen(redPen);
         painter.drawLine(mdrOutReg->x(),                                  mdrOutReg->y() + mdrOutReg->height()/2,         mdrOutReg->x() - 20,          mdrOutReg->y() + mdrOutReg->height()/2);
         painter.drawLine(mdrOutReg->x() - 20,          mdrOutReg->y() + mdrOutReg->height()/2,         mdrOutReg->x() - 20,          bus->y());
-        painter.drawPixmap(mdrOutReg->x() - 12,                          mdrOutReg->y() + mdrOutReg->height()/2 - 6, arrowRightRed->pixmap(12, 12));
+        painter.drawPixmap(mdrOutReg->x() - 18,                          mdrOutReg->y() + mdrOutReg->height()/2 - 9, arrowRightRed->pixmap(18, 18));
     }
     else
     {
         painter.setPen(blackPen);
         painter.drawLine(mdrOutReg->x(),                                  mdrOutReg->y() + mdrOutReg->height()/2,         mdrOutReg->x() - 20,          mdrOutReg->y() + mdrOutReg->height()/2);
         painter.drawLine(mdrOutReg->x() - 20,          mdrOutReg->y() + mdrOutReg->height()/2,         mdrOutReg->x() - 20,          bus->y());
-        painter.drawPixmap(mdrOutReg->x() - 12,                          mdrOutReg->y() + mdrOutReg->height()/2 - 6, arrowRight->pixmap(12, 12));
+        painter.drawPixmap(mdrOutReg->x() - 18,                          mdrOutReg->y() + mdrOutReg->height()/2 - 9, arrowRight->pixmap(18, 18));
     }
 
     //Arrow BUS -> MAR
@@ -480,14 +505,14 @@ void CPU::paintEvent(QPaintEvent *e)
         painter.setPen(redPen);
         painter.drawLine(marReg->x(),                                     marReg->y() + marReg->height()/2,               marReg->x() - 100,                 marReg->y() + marReg->height()/2);
         painter.drawLine(marReg->x() - 100,                 marReg->y() + marReg->height()/2,               marReg->x() - 100,                 bus->y());
-        painter.drawPixmap(marReg->x() - 12,                                     marReg->y() + marReg->height()/2 - 6, arrowRightRed->pixmap(12, 12));
+        painter.drawPixmap(marReg->x() - 18,                                     marReg->y() + marReg->height()/2 - 9, arrowRightRed->pixmap(18, 18));
     }
     else
     {
         painter.setPen(blackPen);
         painter.drawLine(marReg->x(),                                     marReg->y() + marReg->height()/2,               marReg->x() - 100,                 marReg->y() + marReg->height()/2);
         painter.drawLine(marReg->x() - 100,                 marReg->y() + marReg->height()/2,               marReg->x() - 100,                 bus->y());
-        painter.drawPixmap(marReg->x() - 12,                                     marReg->y() + marReg->height()/2 - 6, arrowRight->pixmap(12, 12));
+        painter.drawPixmap(marReg->x() - 18,                                     marReg->y() + marReg->height()/2 - 9, arrowRight->pixmap(18, 18));
     }
 
 
@@ -503,7 +528,7 @@ void CPU::paintEvent(QPaintEvent *e)
 
     //Arrow MAR -> RAM
     painter.drawLine(marReg->x() + marReg->width(), marReg->y() + marReg->height()/2, ramButton->x(), marReg->y() + marReg->height()/2);
-    painter.drawPixmap(ramButton->x() - 12, marReg->y() + marReg->height()/2 - 6, arrowRight->pixmap(12, 12));
+    painter.drawPixmap(ramButton->x() - 17, marReg->y() + marReg->height()/2 - 9, arrowRight->pixmap(18, 18));
 
     //Arrow Outer Data Bus -> MDR In
     if (writeenable[7])
@@ -513,7 +538,7 @@ void CPU::paintEvent(QPaintEvent *e)
         painter.drawLine( data->x() + 20, ramButton->y() + ramButton->height() + 10, mdrInReg->x() + mdrInReg->width() + 40,  ramButton->y() + ramButton->height() + 10);
         painter.drawLine(mdrInReg->x() + mdrInReg->width() + 40,  ramButton->y() + ramButton->height() + 10, mdrInReg->x() + mdrInReg->width() + 40,  mdrInReg->y() + mdrInReg->height()/2);
         painter.drawLine(mdrInReg->x() + mdrInReg->width() + 40,  mdrInReg->y() + mdrInReg->height()/2, mdrInReg->x() + mdrInReg->width(), mdrInReg->y() + mdrInReg->height()/2);
-        painter.drawPixmap(mdrInReg->x() + mdrInReg->width(), mdrInReg->y() + mdrInReg->height()/2 - 6, arrowLeftRed->pixmap(12, 12));
+        painter.drawPixmap(mdrInReg->x() + mdrInReg->width(), mdrInReg->y() + mdrInReg->height()/2 - 9, arrowLeftRed->pixmap(18, 18));
     }
     else {
         painter.setPen(dashedPen);
@@ -521,7 +546,7 @@ void CPU::paintEvent(QPaintEvent *e)
         painter.drawLine( data->x() + 20, ramButton->y() + ramButton->height() + 10, mdrInReg->x() + mdrInReg->width() + 40,  ramButton->y() + ramButton->height() + 10);
         painter.drawLine(mdrInReg->x() + mdrInReg->width() + 40,  ramButton->y() + ramButton->height() + 10, mdrInReg->x() + mdrInReg->width() + 40,  mdrInReg->y() + mdrInReg->height()/2);
         painter.drawLine(mdrInReg->x() + mdrInReg->width() + 40,  mdrInReg->y() + mdrInReg->height()/2, mdrInReg->x() + mdrInReg->width(), mdrInReg->y() + mdrInReg->height()/2);
-        painter.drawPixmap(mdrInReg->x() + mdrInReg->width(), mdrInReg->y() + mdrInReg->height()/2 - 6, arrowLeft->pixmap(12, 12));
+        painter.drawPixmap(mdrInReg->x() + mdrInReg->width(), mdrInReg->y() + mdrInReg->height()/2 - 9, arrowLeft->pixmap(18, 18));
     }
 
     //Arrow MDR Out -> Outer Data Bus
@@ -530,29 +555,29 @@ void CPU::paintEvent(QPaintEvent *e)
         painter.setPen(dashedRedPen);
         painter.drawLine(mdrOutReg->x() + mdrOutReg->width(), mdrOutReg->y() + mdrOutReg->height()/2, data->x() + 10, mdrOutReg->y() + mdrOutReg->height()/2);
         painter.drawLine( data->x() + 10, mdrOutReg->y() + mdrOutReg->height()/2,  data->x() + 10, data->y());
-        painter.drawPixmap( data->x() + 10 - 6, data->y() - 12, arrowDownRed->pixmap(12, 12));
+        painter.drawPixmap( data->x() + 10 - 9, data->y() - 18, arrowDownRed->pixmap(18, 18));
     } else
     {
         painter.setPen(dashedPen);
         painter.drawLine(mdrOutReg->x() + mdrOutReg->width(), mdrOutReg->y() + mdrOutReg->height()/2, data->x() + 10, mdrOutReg->y() + mdrOutReg->height()/2);
         painter.drawLine( data->x() + 10, mdrOutReg->y() + mdrOutReg->height()/2,  data->x() + 10, data->y());
-        painter.drawPixmap( data->x() + 10 - 6, data->y() - 12, arrowDown->pixmap(12, 12));
+        painter.drawPixmap( data->x() + 10 - 9, data->y() - 18, arrowDown->pixmap(18, 18));
     }
 
     //Arrow RAM <-> Outer Data Bus
     painter.drawLine(ramButton->x() + ramButton->width()/2, ramButton->y() + ramButton->height(), ramButton->x() + ramButton->width()/2, data->y());
-    painter.drawPixmap(ramButton->x() + ramButton->width()/2 - 6, ramButton->y() + ramButton->height(), arrowUp->pixmap(12, 12));
-    painter.drawPixmap(ramButton->x() + ramButton->width()/2 - 6, data->y() - 12, arrowDown->pixmap(12, 12));
+    painter.drawPixmap(ramButton->x() + ramButton->width()/2 - 9, ramButton->y() + ramButton->height(), arrowUp->pixmap(18, 18));
+    painter.drawPixmap(ramButton->x() + ramButton->width()/2 - 9, data->y() - 18, arrowDown->pixmap(18, 18));
 
     //    //Arrow GPIO 1 <-> Outer Data Bus
     //    painter.drawLine(gpio1->x() + gpio1->width()/2, gpio1->y() + gpio1->height(), gpio1->x() + gpio1->width()/2, data->y());
-    //    painter.drawPixmap(gpio1->x() + gpio1->width()/2 - 6, gpio1->y() + gpio1->height(), arrowUp->pixmap(12, 12));
-    //    painter.drawPixmap(gpio1->x() + gpio1->width()/2 - 6, data->y() - 12, arrowDown->pixmap(12, 12));
+    //    painter.drawPixmap(gpio1->x() + gpio1->width()/2 - 6, gpio1->y() + gpio1->height(), arrowUp->pixmap(18, 18));
+    //    painter.drawPixmap(gpio1->x() + gpio1->width()/2 - 6, data->y() - 12, arrowDown->pixmap(18, 18));
 
     //    //Arrow GPIO 2 <-> Outer Data Bus
     //    painter.drawLine(gpio2->x() + gpio2->width()/2, gpio2->y() + gpio2->height(), gpio2->x() + gpio2->width()/2, data->y());
-    //    painter.drawPixmap(gpio2->x() + gpio2->width()/2 - 6, gpio2->y() + gpio2->height(), arrowUp->pixmap(12, 12));
-    //    painter.drawPixmap(gpio2->x() + gpio2->width()/2 - 6, data->y() - 12, arrowDown->pixmap(12, 12));
+    //    painter.drawPixmap(gpio2->x() + gpio2->width()/2 - 6, gpio2->y() + gpio2->height(), arrowUp->pixmap(18, 18));
+    //    painter.drawPixmap(gpio2->x() + gpio2->width()/2 - 6, data->y() - 12, arrowDown->pixmap(18, 18));
 
 
 }
@@ -619,7 +644,6 @@ void CPU::ramOpen()
 void CPU::nextInstruction()
 {
     QString pc = progCounter->text();
-
     while (pc == progCounter->text())
     {
         nextStep();
@@ -630,14 +654,14 @@ void CPU::nextStep()
 {
     bool converted = true;
     qDebug() << currentRow;
-    int opcode =  ram->currentRAM[progCounter->text().toInt(&converted, 2)][0];
-    int microcodeRow = ram->getMicrocodeRow(opcode);
+    //    int opcode =  ram->currentRAM[progCounter->text().toInt(&converted, 2)][0];
+    //    int microcodeRow = ram->getMicrocodeRow(opcode);
     int nextRow = microcode->currentMROM[currentRow][0];
-    if (currentRow != microcodeRow) currentRow = microcodeRow;
-    else
-    {
-        currentRow = nextRow;
-    }
+    //    if (currentRow != microcodeRow) currentRow = microcodeRow;
+    //    else
+    //    {
+    //        currentRow = nextRow;
+    //    }
     ///Next Row Condition
     bool values[microcode->currentMROM[currentRow].size() - 2];
     for (int column = 0; column < (int)microcode->currentMROM[currentRow].size() - 2; column++)
@@ -707,12 +731,12 @@ void CPU::nextStep()
     QString outputtext = busButton->text();
     if (microcode->currentMROM[currentRow][4])
     {
-        outputtext = instructionReg->text();
+        outputtext = instructionRegOpcode->text();
         outputcounter++;
     }
     if (microcode->currentMROM[currentRow][6])
     {
-        outputtext =progCounter->text();
+        outputtext = progCounter->text();
         outputcounter++;
     }
     if (microcode->currentMROM[currentRow][8])
@@ -753,19 +777,12 @@ void CPU::nextStep()
     writeenable[7] = microcode->currentMROM[currentRow][14]; //mdrin
     writeenable[8] = microcode->currentMROM[currentRow][16]; //mdrout
 
-    if (microcode->currentMROM[currentRow][3]) instructionReg->setText(outputtext); //instruction register
+    if (microcode->currentMROM[currentRow][3]) instructionRegOpcode->setText(outputtext); //instruction register
     if (microcode->currentMROM[currentRow][5]) progCounter->setText(outputtext); //program counter
     if (microcode->currentMROM[currentRow][7]) aReg->setText(outputtext); // a register
     if (microcode->currentMROM[currentRow][9]) xReg->setText(outputtext); // x register
     if (microcode->currentMROM[currentRow][10]) yReg->setText(outputtext); // y register
     if (microcode->currentMROM[currentRow][13]) marReg->setText(outputtext); // mar register
-    if (microcode->currentMROM[currentRow][14])
-    {
-        int address = marReg->text().toInt();
-        int row = address / 4;
-        int col = address % 4;
-        mdrInReg->setText(QString::number(ram->currentRAM[row][col])); // mdr in register
-    }
     if (microcode->currentMROM[currentRow][16]) mdrOutReg->setText(outputtext); // mdr out register
 
 
@@ -779,10 +796,10 @@ void CPU::nextStep()
             {
                 if (microcode->currentMROM[currentRow][14]) //mdrin.we
                 {
-                  int address = marReg->text().toInt();
-                  int row = address / 4;
-                  int col = address % 4;
-                  mdrInReg->setText(QString::number(ram->currentRAM[row][col]));
+                    int address = marReg->text().toInt(nullptr, 2);
+                    int row = address / 4;
+                    int col = address % 4;
+                    mdrInReg->setText(QString("%1").arg(ram->currentRAM[row][col], 8, 2, QChar('0'))); // mdr in register
                 }
             }
             else secondstepread = true;
@@ -792,10 +809,10 @@ void CPU::nextStep()
             {
                 if (microcode->currentMROM[currentRow][17])
                 {
-                    int address = marReg->text().toInt();
+                    int address = marReg->text().toInt(nullptr, 2);
                     int row = address / 4;
                     int col = address % 4;
-                    mdrOutReg->setText(QString::number(ram->currentRAM[row][col], 2));
+                    ram->currentRAM[row][col] = mdrOutReg->text().toInt(nullptr, 2);
                 }
             }
             else secondstepwrite = true;
@@ -807,31 +824,45 @@ void CPU::nextStep()
 
 void CPU::reset()
 {
-    //TODO: set current row correctly
-    currentRow = 0;
     currentInstruction = 0;
-    quint32 value = QRandomGenerator::global()->bounded(127);
-    xReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
-    value = QRandomGenerator::global()->bounded(127);
-    yReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
-    value = QRandomGenerator::global()->bounded(127);
-    zReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
-    value = QRandomGenerator::global()->bounded(127);
-    marReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
-    value = QRandomGenerator::global()->bounded(127);
-    mdrInReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
-    value = QRandomGenerator::global()->bounded(127);
-    mdrOutReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
-    value = QRandomGenerator::global()->bounded(127);
-    busButton->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
-    value = QRandomGenerator::global()->bounded(127);
-    instructionReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
-    value = QRandomGenerator::global()->bounded(127);
-    aReg->setText(QString("%1").arg(value, 8 , 2, QChar('0')));
-    value = QRandomGenerator::global()->bounded(127);
-    progCounter->setText("0000000");
-    nextStepButton->setEnabled(true);
-    nextInstructionButton->setEnabled(true);
+    bool vFound = false;
+    qDebug() << ram->currentInstructions.size();
+    qDebug() << ram->currentInstructions.at(0).at(0).toInt();
+    uint i = 0;
+    while (i < ram->currentInstructions.size() && !vFound)
+    {
+        if (ram->currentRAM[0][0] == ram->currentInstructions.at(i).at(0).toInt())
+        {
+            currentRow = ram->currentInstructions.at(i).at(2).toInt();
+            vFound = true;
+        }
+        i++;
+    }
+
+    if (vFound == false)
+    {
+        QMessageBox::warning(this, "RAM is corrupted", "The Operation Code is not set. Please fix the RAM and Instruction Set or load one of the demoes before resetting.");
+
+    }
+    else
+    {
+        xReg->setText(QString("0x%1").arg(generator->generate(), 8, 16, QChar('0')));
+        yReg->setText(QString("0x%1").arg(generator->generate(), 8, 16, QChar('0')));
+        zReg->setText(QString("0x%1").arg(generator->generate(), 8, 16, QChar('0')));
+        marReg->setText(QString("0x%1").arg(generator->generate(), 8, 16, QChar('0')));
+        mdrInReg->setText(QString("0x%1").arg(generator->generate(), 8, 16, QChar('0')));
+        mdrOutReg->setText(QString("0x%1").arg(generator->generate(), 8, 16, QChar('0')));
+        busButton->setText(QString("0x%1").arg(generator->generate(), 8, 16, QChar('0')));
+        instructionRegOpcode->setText(QString("0x%1").arg(generator->bounded(256), 2, 16, QChar('0')));
+        instructionReg1->setText(QString("0x%1").arg(generator->bounded(256), 2, 16, QChar('0')));
+        instructionReg2->setText(QString("0x%1").arg(generator->bounded(256), 2, 16, QChar('0')));
+        instructionReg3->setText(QString("0x%1").arg(generator->bounded(256), 2, 16, QChar('0')));
+        aReg->setText(QString("0x%1").arg(generator->generate(), 8, 16, QChar('0')));
+        progCounter->setText("0x00000000");
+        nextStepButton->setEnabled(true);
+        nextInstructionButton->setEnabled(true);
+    }
+    this->update();
 }
 
 void CPU::irExp()
@@ -883,15 +914,15 @@ QBoxLayout* CPU::drawAlu()
 
     zLabel = new QLabel("Z Register");
     zLabel->setAlignment(Qt::AlignCenter);
-    zLabel->setMinimumSize(150, 23);
+    zLabel->setMinimumSize(100, 23);
 
     xLabel = new QLabel("X Register");
     xLabel->setAlignment(Qt::AlignHCenter|Qt::AlignBottom);
-    xLabel->setMinimumSize(150, 23);
+    xLabel->setMinimumSize(100, 23);
 
     yLabel = new QLabel("Y Register");
     yLabel->setAlignment(Qt::AlignHCenter|Qt::AlignBottom);
-    yLabel->setMinimumSize(150, 23);
+    yLabel->setMinimumSize(100, 23);
 
     labelsLayout->addStretch();
     labelsLayout->addWidget(xLabel);
@@ -900,12 +931,12 @@ QBoxLayout* CPU::drawAlu()
 
 
     comparisons = new QPushButton("== 0, < 0, > 0 ?");
-    comparisons->setStyleSheet("border: 2px solid black;");
+    comparisons->setStyleSheet("border: 3px solid black;");
     comparisons->setCursor(Qt::WhatsThisCursor);
     compLayout->addWidget(comparisons);
     compLayout->addStretch();
     aluButton = new QPushButton("Arithmetic Logic Unit");
-    aluButton->setStyleSheet("border: 2px solid black;");
+    aluButton->setStyleSheet("border: 3px solid black;");
     aluButton->setCursor(Qt::WhatsThisCursor);
     QFont font = aluButton->font();
     font.setPointSize(10);
@@ -917,15 +948,15 @@ QBoxLayout* CPU::drawAlu()
     alu->addWidget(aluButton);
     alu->addStretch();
 
-    xReg = new QPushButton("0000000");
-    xReg->setStyleSheet("border: 2px solid black;");
+    xReg = new QPushButton("0x00000000");
+    xReg->setStyleSheet("border: 3px solid black;");
     xReg->setCursor(Qt::WhatsThisCursor);
-    xReg->setMinimumSize(150, 23);
+    xReg->setMinimumSize(100, 23);
 
-    yReg = new QPushButton("0000000");
-    yReg->setStyleSheet("border: 2px solid black;");
+    yReg = new QPushButton("0x00000000");
+    yReg->setStyleSheet("border: 3px solid black;");
     yReg->setCursor(Qt::WhatsThisCursor);
-    yReg->setMinimumSize(150, 23);
+    yReg->setMinimumSize(100, 23);
 
 
     aluInLayout->addStretch();
@@ -933,10 +964,10 @@ QBoxLayout* CPU::drawAlu()
     aluInLayout->addWidget(yReg);
     aluInLayout->addStretch();
 
-    zReg = new QPushButton("0000000");
-    zReg->setStyleSheet("border: 2px solid black;");
+    zReg = new QPushButton("0x00000000");
+    zReg->setStyleSheet("border: 3px solid black;");
     zReg->setCursor(Qt::WhatsThisCursor);
-    zReg->setMinimumSize(150, 23);
+    zReg->setMinimumSize(100, 23);
     QHBoxLayout *zLayout = new QHBoxLayout();
     zLayout->addStretch();
     zLayout->addWidget(zReg);

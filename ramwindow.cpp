@@ -3,15 +3,18 @@
 
 ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
 {
-    //TODO: Highlight selected row so it's easier to find the right cells
     this->setWindowTitle("External Random Access Memory (RAM)");
     ramTable = new QTableWidget(2048, 4, this);
+
     ramTable->setToolTip("8kB RAM");
     hLabels << "Operation Code" << "Register 1" << "Register 2" << "Register 3";
     ramTable->setHorizontalHeaderLabels(hLabels);
-    ramTable->verticalHeader()->hide();
-    for (int column = 0; column < ramTable->columnCount(); column++) {
-        for (int row = 0; row < ramTable->rowCount(); row++)
+    QStringList vLabels;
+    ramTable->setShowGrid(false);
+    for (int row = 0; row < ramTable->rowCount(); row++) {
+        int cell = row * 4;
+        vLabels << QString("0x%1").arg(cell, 4, 16, QChar('0'));
+        for (int column = 0; column < ramTable->columnCount(); column++)
         {
             QSpinBox *spinBox = new QSpinBox(this);
             spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
@@ -21,9 +24,10 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
             spinBox->setPrefix("0x");
             connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
             ramTable->setCellWidget(row, column, spinBox);
+            if (row % 2 == 0) spinBox->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");
         }
     }
-
+    ramTable->setVerticalHeaderLabels(vLabels);
     ramTable->setSortingEnabled(false);
     ramTable->resizeColumnsToContents();
     okButton = new QPushButton("OK");
@@ -226,8 +230,6 @@ void ramWindow::apply()
         {
             bool converted = true;
             currentRAM[row][column] = ramTable->cellWidget(row, column)->property("value").toInt(&converted);
-            qDebug() << currentRAM[row][column];
-            if (currentRAM[row][column]) currentRAM[row][column] = 0;
 
         }
     }
@@ -286,6 +288,7 @@ void ramWindow::reset()
 
 void ramWindow::cellChanged(int value)
 {
+
     if (value != 0) resetButton->setEnabled(true);
     applyButton->setEnabled(true);
 }
