@@ -12,8 +12,7 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
     QStringList vLabels;
     ramTable->setShowGrid(false);
     for (int row = 0; row < ramTable->rowCount(); row++) {
-        int cell = row * 4;
-        vLabels << QString("0x%1").arg(cell, 4, 16, QChar('0'));
+        vLabels << QString("0x%1").arg(row * 4, 4, 16, QChar('0'));
         for (int column = 0; column < ramTable->columnCount(); column++)
         {
             QSpinBox *spinBox = new QSpinBox(this);
@@ -122,7 +121,7 @@ QString ramWindow::saveRam()
     {
         for (int col = 0; col < ramTable->columnCount(); col++)
         {
-            if (currentRAM[row][col] == 0) text.append("0");
+            if (currentRAM[row][col] == NULL) text.append("0");
             else text.append(currentRAM[row][col]);
             text.append("\t");
         }
@@ -130,7 +129,6 @@ QString ramWindow::saveRam()
     }
 
     QString instructionSetInfo = QString("%1").arg(instructionsTable->rowCount());
-    qDebug() << instructionSetInfo;
     text.append(instructionSetInfo);
     text.append("\n");
 
@@ -144,7 +142,6 @@ QString ramWindow::saveRam()
         }
         text.append("\n");
     }
-    qDebug() << text;
     return text;
 }
 
@@ -152,6 +149,12 @@ void ramWindow::readRam(QString *text)
 {
     ramTable->clear();
     instructionsTable->clear();
+    ramTable->setToolTip("8kB RAM");
+    hLabels << "Operation Code" << "Register 1" << "Register 2" << "Register 3";
+    ramTable->setHorizontalHeaderLabels(hLabels);
+    QStringList vLabels;
+    ramTable->setShowGrid(false);
+
     QStringList lines = text->split("\n", Qt::SkipEmptyParts);
     int row = 0;
     ramTable->setRowCount(lines[row].toInt());
@@ -159,6 +162,7 @@ void ramWindow::readRam(QString *text)
     while (row <= ramTable->rowCount())
     {
         QStringList columns = lines[row].split("\t");
+        vLabels << QString("0x%1").arg(row * 4, 4, 16, QChar('0'));
         for (int column = 0; column < ramTable->columnCount(); column++)
         {
             QSpinBox *spinBox = new QSpinBox(this);
@@ -169,11 +173,14 @@ void ramWindow::readRam(QString *text)
             spinBox->setPrefix("0x");
             spinBox->setValue(columns[column].toInt());
             connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
-            ramTable->setCellWidget(row, column, spinBox);
+            ramTable->setCellWidget(row - 1, column, spinBox);
+            if (row % 2 == 0) spinBox->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");
         }
         row++;
     }
-    //<=2053 tablerowcount 2048 + instructionsrowcount 4 = 2052
+    ramTable->setVerticalHeaderLabels(vLabels);
+    ramTable->setSortingEnabled(false);
+    ramTable->resizeColumnsToContents();
     instructionsTable->setRowCount(lines[row].toInt());
     row++;
     while (row <= ramTable->rowCount() + instructionsTable->rowCount() + 1)
@@ -187,16 +194,16 @@ void ramWindow::readRam(QString *text)
         opcode->setMinimum(0);
         opcode->setMaximum(255);
         opcode->setValue(columns[0].toInt());
-        instructionsTable->setCellWidget(row, 0, opcode);
+        instructionsTable->setCellWidget(row - ramTable->rowCount() - 2, 0, opcode);
 
 
         QTableWidgetItem *mnemonic = new QTableWidgetItem(columns[1]);
-        instructionsTable->setItem(row, 1, mnemonic);
+        instructionsTable->setItem(row - ramTable->rowCount() - 2, 1, mnemonic);
 
         QSpinBox *microcodeRow = new QSpinBox(this);
         microcodeRow->setInputMethodHints(Qt::ImhDigitsOnly);
         microcodeRow->setValue(columns[2].toInt());
-        instructionsTable->setCellWidget(row, 2, microcodeRow);
+        instructionsTable->setCellWidget(row - ramTable->rowCount() - 2, 2, microcodeRow);
 
         row++;
     }
