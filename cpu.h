@@ -25,6 +25,7 @@
 #include <QTableWidget>
 #include <vector>
 #include <algorithm>
+#include <QRadioButton>
 #include <iostream>
 #include "microcoderom.h"
 #include "ramwindow.h"
@@ -57,10 +58,10 @@ private:
     QIcon *pauseIcon;
     QPushButton *nextStepButton;
     QPushButton *resetButton;
-    QPushButton *readMicrocode;
-    QPushButton *writeMicrocode;
-    QPushButton *readRAM;
-    QPushButton *writeRAM;
+    QPushButton *openMicrocode;
+    QPushButton *saveMicrocode;
+    QPushButton *openRAM;
+    QPushButton *saveRAM;
 
     QPushButton *ramButton;
 
@@ -81,6 +82,13 @@ private:
     QPushButton *mdrInReg;
     QPushButton *mdrOutReg;
 
+    QRadioButton *gpioOut1;
+    QRadioButton *gpioOut2;
+
+    QRadioButton *gpioIn1;
+    QRadioButton *gpioIn2;
+
+    QLabel *busLabel;
     QLabel *irLabel;
     QLabel *pcLabel;
     QLabel *aLabel;
@@ -114,6 +122,7 @@ private slots:
     void saveRom();
     void ramFile();
     void saveRam();
+    void gpioClick();
 
 };
 #endif // CPU_H

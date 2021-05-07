@@ -1,7 +1,6 @@
 #include "cpu.h"
 
-#include <QMenu>
-#include <QMenuBar>
+
 #include "ramwindow.h"
 
 bool secondstepread = false;
@@ -24,6 +23,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     QVBoxLayout *aLayout = new QVBoxLayout();
     QVBoxLayout *memLayout = new QVBoxLayout();
     QVBoxLayout *cpuLayout = new QVBoxLayout();
+    QGridLayout *gpioLayout = new QGridLayout();
 
 
     ///RAM Button
@@ -42,32 +42,37 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     ramButton->setMinimumSize(100, 600);
     ramButton->setStyleSheet("border: 3px solid black;");
 
+    ///Outer Data Bus
     data = new QFrame();
     data->setFrameShape(QFrame::HLine);
     data->setFrameShadow(QFrame::Plain);
     data->setLineWidth(3);
 
     QVBoxLayout *ramLayout = new QVBoxLayout();
-    ramLayout->addSpacing(20);
     ramLayout->addWidget(ramButton);
     ramLayout->addStretch();
     ramLayout->addWidget(data);
 
-    //    QVBoxLayout *gpio1Layout = new QVBoxLayout();
-    //    QVBoxLayout *gpio2Layout = new QVBoxLayout();
-    //    gpio1->setStyleSheet("background-color: gray");
-    //    gpio2->setStyleSheet("background-color: gray");
-    //    gpio1Layout->addStretch();
-    //    gpio1Layout->addWidget(gpio1);
-    //    gpio2Layout->addStretch();
-    //    gpio2Layout->addWidget(gpio2);
-
-
+    ///Inner Data Bus
     bus = new QFrame();
     bus->setFrameShape(QFrame::HLine);
     bus->setFrameShadow(QFrame::Plain);
     bus->setLineWidth(3);
 
+    busLabel = new QLabel("Data Bus");
+    busLabel->setAlignment(Qt::AlignCenter);
+    busButton = new QPushButton("0x00000000");
+    busButton->setStyleSheet("border: 3px solid black;");
+    busButton->setMinimumSize(100, 23);
+    busButton->setCursor(Qt::WhatsThisCursor);
+
+    QHBoxLayout *busLayout = new QHBoxLayout();
+
+    busLayout->addStretch();
+    busLayout->addWidget(busButton);
+    busLayout->addStretch();
+
+    ///Instruction Register
     irLabel = new QLabel("Instruction Register");
     irLabel->setAlignment(Qt::AlignCenter);
     instructionRegOpcode = new QPushButton("0x00");
@@ -95,33 +100,36 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     instruction->addWidget(instructionReg2);
     instruction->addWidget(instructionReg3);
     instruction->setSpacing(0);
+
+    ///Next Instruction
     playIcon = new QIcon(":/playpause/icons/playIcon");
     pauseIcon = new QIcon(":/playpause/icons/pauseIcon");
-    nextInstructionButton = new QPushButton(*playIcon, "Play", this);
+    nextInstructionButton = new QPushButton(*playIcon, "Next Instruction", this);
     nextInstructionButton->setCheckable(true);
     nextInstructionButton->setChecked(false);
     nextInstructionButton->setEnabled(false);
     nextInstructionButton->setMinimumSize(100, 23);
+
+    ///Next Step
     nextStepButton = new QPushButton("Next Step");
     nextStepButton->setDisabled(true);
     nextStepButton->setMinimumSize(100, 23);
+
+    ///Reset
     resetButton = new QPushButton("Reset");
     resetButton->setMinimumSize(100, 23);
-    irLayout->addSpacing(20);
-    irLayout->addWidget(nextInstructionButton);
-    irLayout->addWidget(nextStepButton);
-    irLayout->addWidget(resetButton);
-    irLayout->addStretch();
-    irLayout->addWidget(irLabel);
-    irLayout->addLayout(instruction);
 
+    ///Open Microcode ROM
+    openMicrocode = new QPushButton("Open Microcode ROM...");
+    openMicrocode->setMinimumSize(100, 23);
+    openMicrocode->setCursor(Qt::PointingHandCursor);
 
-    readMicrocode = new QPushButton("Read Microcode ROM...");
-    readMicrocode->setMinimumSize(100, 23);
-    readMicrocode->setCursor(Qt::PointingHandCursor);
-    writeMicrocode = new QPushButton("Write Microcode ROM...");
-    writeMicrocode->setMinimumSize(100, 23);
-    writeMicrocode->setCursor(Qt::PointingHandCursor);
+    ///Save Microcode ROM
+    saveMicrocode = new QPushButton("Save Microcode ROM...");
+    saveMicrocode->setMinimumSize(100, 23);
+    saveMicrocode->setCursor(Qt::PointingHandCursor);
+
+    ///Program Counter
     pcLabel = new QLabel("Program Counter");
     pcLabel->setAlignment(Qt::AlignCenter);
     progCounter = new QPushButton("0x00000000");
@@ -130,28 +138,33 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     progCounter->setMinimumSize(100, 23);
 
 
-    pcLayout->addSpacing(20);
-    pcLayout->addWidget(readMicrocode);
-    pcLayout->addWidget(writeMicrocode);
+    pcLayout->addWidget(openMicrocode);
+    pcLayout->addWidget(saveMicrocode);
     pcLayout->addStretch();
     pcLayout->addWidget(pcLabel);
     pcLayout->addWidget(progCounter);
 
-    readRAM = new QPushButton("Read RAM...");
-    readRAM->setMinimumSize(100, 23);
-    readRAM->setCursor(Qt::PointingHandCursor);
-    writeRAM = new QPushButton("Write RAM...");
-    writeRAM->setMinimumSize(100, 23);
-    writeRAM->setCursor(Qt::PointingHandCursor);
+    ///Open RAM
+    openRAM = new QPushButton("Open RAM...");
+    openRAM->setMinimumSize(100, 23);
+    openRAM->setCursor(Qt::PointingHandCursor);
+
+    ///Save RAM
+    saveRAM = new QPushButton("Save RAM...");
+    saveRAM->setMinimumSize(100, 23);
+    saveRAM->setCursor(Qt::PointingHandCursor);
+
+    ///A Register
     aLabel = new QLabel("A Register");
     aLabel->setAlignment(Qt::AlignCenter);
     aReg = new QPushButton("0x00000000");
     aReg->setStyleSheet("border: 3px solid black;");
     aReg->setCursor(Qt::WhatsThisCursor);
     aReg->setMinimumSize(100, 23);
-    aLayout->addSpacing(20);
-    aLayout->addWidget(readRAM);
-    aLayout->addWidget(writeRAM);
+
+
+    aLayout->addWidget(openRAM);
+    aLayout->addWidget(saveRAM);
     aLayout->addStretch();
     aLayout->addWidget(aLabel);
     aLayout->addWidget(aReg);
@@ -185,7 +198,6 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     mdrOutReg->setStyleSheet("border: 3px solid black;");
     mdrOutReg->setMinimumSize(100, 23);
 
-    memLayout->addSpacing(20);
     memLayout->addWidget(marLabel);
     memLayout->addWidget(marReg);
     memLayout->addStretch();
@@ -203,34 +215,44 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     romButton->setMinimumSize(100, 600);
     romButton->setStyleSheet("border: 3px solid black;");
 
+    ///GPIOs
+    gpioOut1 = new QRadioButton("Output Pin 1");
+    gpioOut2 = new QRadioButton("Output Pin 2");
+    gpioOut1->setAutoExclusive(false);
+    gpioOut2->setAutoExclusive(false);
+
+
+    gpioIn1 = new QRadioButton("Input Pin 1");
+    gpioIn2 = new QRadioButton("Input Pin 2");
+    gpioIn1->setAutoExclusive(false);
+    gpioIn2->setAutoExclusive(false);
+
+    gpioLayout->addWidget(gpioIn1, 0, 0, Qt::AlignLeft);
+    gpioLayout->addWidget(gpioIn2, 1, 0, Qt::AlignLeft);
+    gpioLayout->addWidget(gpioOut1, 0, 1, Qt::AlignRight);
+    gpioLayout->addWidget(gpioOut2, 1, 1, Qt::AlignRight);
+    gpioLayout->setColumnStretch(2, 1);
+//TODO: Multiplexer for Conditions with GPIO
+    irLayout->addWidget(nextInstructionButton);
+    irLayout->addWidget(nextStepButton);
+    irLayout->addWidget(resetButton);
+    irLayout->addStretch();
+    irLayout->addWidget(irLabel);
+    irLayout->addLayout(instruction);
+
+
     QVBoxLayout *romLayout = new QVBoxLayout();
-    romLayout->addSpacing(20);
     romLayout->addWidget(romButton);
     romLayout->addStretch();
-    QLabel *busLabel = new QLabel("Data Bus");
-    busLabel->setAlignment(Qt::AlignCenter);
-    busButton = new QPushButton("0x00000000");
-    busButton->setStyleSheet("border: 3px solid black;");
-    busButton->setMinimumSize(100, 23);
-    busButton->setCursor(Qt::WhatsThisCursor);
 
-    QHBoxLayout *busLayout = new QHBoxLayout();
-
-    busLayout->addStretch();
-    busLayout->addWidget(busButton);
-    busLayout->addStretch();
 
     ///Put everything together
-    //    buttonsLayout->addWidget(rombutton);
     buttonsLayout->addLayout(romLayout);
     buttonsLayout->addLayout(irLayout);
     buttonsLayout->addLayout(pcLayout);
     buttonsLayout->addLayout(aLayout);
     buttonsLayout->addLayout(alu);
     buttonsLayout->addLayout(memLayout);
-    //    buttonsLayout->addWidget(ramButton);
-
-
 
     cpuLayout->addSpacing(5);
     cpuLayout->addLayout(buttonsLayout);
@@ -241,31 +263,34 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
 
     QHBoxLayout *completeLayout = new QHBoxLayout();
     completeLayout->addLayout(cpuLayout);
-    completeLayout->addSpacing(50);
+    completeLayout->addSpacing(45);
     completeLayout->addLayout(ramLayout);
 
-    widget->setLayout(completeLayout);
+    QVBoxLayout *fullLayout = new QVBoxLayout();
+    fullLayout->addLayout(gpioLayout);
+    fullLayout->addLayout(completeLayout);
+    widget->setLayout(fullLayout);
     this->setCentralWidget(widget);
     this->resize(1700, 1000);
 
     ///Connections
     connect(romButton, SIGNAL(clicked()), this, SLOT(microcodeOpen()));
     connect(ramButton, SIGNAL(clicked()), this, SLOT(ramOpen()));
-
     connect(nextInstructionButton, SIGNAL(clicked()), this, SLOT(nextInstruction()));
     connect(nextStepButton, SIGNAL(clicked()), this, SLOT(nextStep()));
     connect(resetButton, SIGNAL(clicked()), this, SLOT(reset()));
-
-    connect(readMicrocode, SIGNAL(clicked()), this, SLOT(microcodeFile()));
-    connect(writeMicrocode, SIGNAL(clicked()), this, SLOT(saveRom()));
-    connect(readRAM, SIGNAL(clicked()), this, SLOT(ramFile()));
-    connect(writeRAM, SIGNAL(clicked()), this, SLOT(saveRam()));
+    connect(openMicrocode, SIGNAL(clicked()), this, SLOT(microcodeFile()));
+    connect(saveMicrocode, SIGNAL(clicked()), this, SLOT(saveRom()));
+    connect(openRAM, SIGNAL(clicked()), this, SLOT(ramFile()));
+    connect(saveRAM, SIGNAL(clicked()), this, SLOT(saveRam()));
     connect(progCounter, SIGNAL(clicked()), this, SLOT(pcExp()));
     connect(instructionRegOpcode, SIGNAL(clicked()), this, SLOT(irExp()));
     connect(aReg, SIGNAL(clicked()), this, SLOT(aRegExp()));
     connect(marReg, SIGNAL(clicked()), this, SLOT(marExp()));
     connect(mdrInReg, SIGNAL(clicked()), this, SLOT(mdrInExp()));
     connect(mdrOutReg, SIGNAL(clicked()), this, SLOT(mdrOutExp()));
+    connect(gpioOut1, SIGNAL(clicked()), this, SLOT(gpioClick()));
+    connect(gpioOut2, SIGNAL(clicked()), this, SLOT(gpioClick()));
 }
 
 CPU::~CPU(){}
@@ -280,14 +305,14 @@ void CPU::paintEvent(QPaintEvent *e)
     QPen redPen(Qt::red);
     dashedPen.setStyle(Qt::DashLine);
     dashedRedPen.setStyle(Qt::DashLine);
-    QIcon *arrowDownRed = new QIcon(":/icons/arrowDownRed.png");
-    QIcon *arrowLeftRed = new QIcon(":/icons/arrowLeftRed.png");
-    QIcon *arrowUpRed = new QIcon(":/icons/arrowUpRed.png");
-    QIcon *arrowRightRed = new QIcon(":/icons/arrowRightRed.png");
-    QIcon *arrowDown = new QIcon(":/icons/arrowDown.png");
-    QIcon *arrowLeft = new QIcon(":/icons/arrowLeft.png");
-    QIcon *arrowUp = new QIcon(":/icons/arrowUp.png");
-    QIcon *arrowRight = new QIcon(":/icons/arrowRight.png");
+    QIcon *arrowDownRed = new QIcon(":/arrows/icons/arrowDownRed.png");
+    QIcon *arrowLeftRed = new QIcon(":/arrows/icons/arrowLeftRed.png");
+    QIcon *arrowUpRed = new QIcon(":/arrows/icons/arrowUpRed.png");
+    QIcon *arrowRightRed = new QIcon(":/arrows/icons/arrowRightRed.png");
+    QIcon *arrowDown = new QIcon(":/arrows/icons/arrowDown.png");
+    QIcon *arrowLeft = new QIcon(":/arrows/icons/arrowLeft.png");
+    QIcon *arrowUp = new QIcon(":/arrows/icons/arrowUp.png");
+    QIcon *arrowRight = new QIcon(":/arrows/icons/arrowRight.png");
     redPen.setWidth(4);
     blackPen.setWidth(4);
     dashedPen.setWidth(2);
@@ -631,6 +656,12 @@ void CPU::saveRam()
     f.close();
 }
 
+void CPU::gpioClick()
+{
+    QRadioButton *clickedButton = qobject_cast<QRadioButton *>(sender());
+    clickedButton->setChecked(!clickedButton->isChecked());
+}
+
 void CPU::microcodeOpen()
 {
     microcode->show();
@@ -731,7 +762,11 @@ void CPU::nextStep()
     QString outputtext = busButton->text();
     if (microcode->currentMROM[currentRow][4])
     {
-        outputtext = instructionRegOpcode->text();
+        QString instructionOutput = instructionRegOpcode->text();
+        instructionOutput.append(instructionReg1->text());
+        instructionOutput.append(instructionReg2->text());
+        instructionOutput.append(instructionReg3->text());
+        outputtext = instructionOutput;
         outputcounter++;
     }
     if (microcode->currentMROM[currentRow][6])
@@ -777,20 +812,27 @@ void CPU::nextStep()
     writeenable[7] = microcode->currentMROM[currentRow][14]; //mdrin
     writeenable[8] = microcode->currentMROM[currentRow][16]; //mdrout
 
-    if (microcode->currentMROM[currentRow][3]) instructionRegOpcode->setText(outputtext); //instruction register
+    if (microcode->currentMROM[currentRow][3])
+    {
+        instructionRegOpcode->setText(QString("0x").append(outputtext.midRef(2, 2))); //instruction register
+        instructionReg1->setText(QString("0x").append(outputtext.midRef(4, 2)));
+        instructionReg2->setText(QString("0x").append(outputtext.midRef(6, 2)));
+        instructionReg3->setText(QString("0x").append(outputtext.rightRef(2)));
+    }
+
     if (microcode->currentMROM[currentRow][5]) progCounter->setText(outputtext); //program counter
     if (microcode->currentMROM[currentRow][7]) aReg->setText(outputtext); // a register
     if (microcode->currentMROM[currentRow][9]) xReg->setText(outputtext); // x register
     if (microcode->currentMROM[currentRow][10]) yReg->setText(outputtext); // y register
     if (microcode->currentMROM[currentRow][13]) marReg->setText(outputtext); // mar register
     if (microcode->currentMROM[currentRow][16]) mdrOutReg->setText(outputtext); // mdr out register
-
-
+    gpioOut1->setChecked(microcode->currentMROM[currentRow][18]);
+    gpioOut2->setChecked(microcode->currentMROM[currentRow][19]);
 
     ///Communication with external RAM
-    if (microcode->currentMROM[currentRow][19]) //mem.en
+    if (microcode->currentMROM[currentRow][21]) //mem.en
     {
-        if (microcode->currentMROM[currentRow][18]) //mem.r
+        if (microcode->currentMROM[currentRow][20]) //mem.r
         {
             if (secondstepread)
             {
@@ -807,7 +849,7 @@ void CPU::nextStep()
         else {
             if (secondstepwrite)
             {
-                if (microcode->currentMROM[currentRow][17])
+                if (microcode->currentMROM[currentRow][17]) //mdrout.oe
                 {
                     int address = marReg->text().toInt(nullptr, 2);
                     int row = address / 4;

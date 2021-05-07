@@ -4,9 +4,9 @@
 microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 {
     this->setWindowTitle("Microcode ROM");
-    table = new QTableWidget(100, 20, this);
+    table = new QTableWidget(100, 22, this);
     hLabels << "next" << "cond" << "alu.opcode" << "ir.we" << "ir.oe"<< "pc.we" << "pc.oe" << "a.we" << "a.oe" << "x.we" << "y.we" << "z.we" << "z.oe" <<
-               "mar.we"  << "mdrin.we" << "mdrin.oe" << "mdrout.we" << "mdrout.oe" << "mem.r/-w" << "mem.en";
+               "mar.we"  << "mdrin.we" << "mdrin.oe" << "mdrout.we" << "mdrout.oe" << "gpioOut1" << "gpioOut2" << "mem.r/-w" << "mem.en";
     table->setHorizontalHeaderLabels(hLabels);
     table->setShowGrid(false);
     QHeaderView *header = table->horizontalHeader();

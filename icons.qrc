@@ -1,18 +1,25 @@
 <RCC>
-    <qresource prefix="/playpause">
-        <file>icons/playIcon</file>
-        <file>icons/pauseIcon</file>
-    </qresource>
-    <qresource prefix="/">
-        <file>icons/1024px-Location_dot_red.svg.png</file>
-        <file>icons/Location_dot_blue.svg.png</file>
-        <file>icons/arrowDown.png</file>
-        <file>icons/arrowLeft.png</file>
-        <file>icons/arrowRight.png</file>
-        <file>icons/arrowUp.png</file>
-        <file>icons/arrowDownRed.png</file>
-        <file>icons/arrowLeftRed.png</file>
-        <file>icons/arrowRightRed.png</file>
-        <file>icons/arrowUpRed.png</file>
-    </qresource>
+  <qresource prefix="/radiobutton">
+    <file>icons/radiobutton-unchecked.png</file>
+    <file>icons/radiobutton-indicator-focused.png</file>
+    <file>icons/radiobutton-indicator.png</file>
+    <file>icons/radiobutton-indicator-checked.png</file>
+    <file>icons/radiobutton-indicator-checked-focused.png</file>
+    <file>icons/radiobutton-indicator-checked-hovered.png</file>
+    <file>icons/radiobutton-indicator-checked-pressed.png</file>
+  </qresource>
+  <qresource prefix="/arrows">
+    <file>icons/arrowDown.png</file>
+    <file>icons/arrowLeft.png</file>
+    <file>icons/arrowRight.png</file>
+    <file>icons/arrowUp.png</file>
+    <file>icons/arrowDownRed.png</file>
+    <file>icons/arrowLeftRed.png</file>
+    <file>icons/arrowRightRed.png</file>
+    <file>icons/arrowUpRed.png</file>
+  </qresource>
+  <qresource prefix="/playPause">
+    <file>icons/playIcon.png</file>
+    <file>icons/pauseIcon.png</file>
+  </qresource>
 </RCC>
