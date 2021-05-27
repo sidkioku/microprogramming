@@ -65,7 +65,7 @@ private:
 
     QPushButton *ramButton;
 
-    QPushButton *instructionRegOpcode;
+    QPushButton *instructionReg;
     QPushButton *instructionReg1;
     QPushButton *instructionReg2;
     QPushButton *instructionReg3;

@@ -31,7 +31,6 @@ public:
     void readRam(QString *text);
     int  currentRAM[2048][4];
     int getMicrocodeRow(int opcode);
-    QLabel *currentByte;
     std::vector<std::vector<QString>> currentInstructions;
 
 private:
@@ -53,7 +52,6 @@ private slots:
     void cancel();
     void reset();
     void cellChanged(int value);
-    void byte();
     void addMnemonic();
 
 

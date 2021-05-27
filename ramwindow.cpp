@@ -7,26 +7,23 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
     ramTable = new QTableWidget(2048, 4, this);
 
     ramTable->setToolTip("8kB RAM");
-    hLabels << "Operation Code" << "Register 1" << "Register 2" << "Register 3";
-    ramTable->setHorizontalHeaderLabels(hLabels);
-    QStringList vLabels;
+    ramTable->horizontalHeader()->hide();
     ramTable->setShowGrid(false);
+    ramTable->verticalHeader()->hide();
     for (int row = 0; row < ramTable->rowCount(); row++) {
-        vLabels << QString("0x%1").arg(row * 4, 4, 16, QChar('0'));
         for (int column = 0; column < ramTable->columnCount(); column++)
         {
             QSpinBox *spinBox = new QSpinBox(this);
             spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
-            spinBox->setDisplayIntegerBase(16);
-            spinBox->setMaximum(255);
+            spinBox->setDisplayIntegerBase(2);
+            spinBox->setMaximum(15);
             spinBox->setMinimum(0);
-            spinBox->setPrefix("0x");
+            spinBox->setToolTip(QString("Address: %1").arg(row * 4 + column));
             connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
             ramTable->setCellWidget(row, column, spinBox);
             if (row % 2 == 0) spinBox->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");
         }
     }
-    ramTable->setVerticalHeaderLabels(vLabels);
     ramTable->setSortingEnabled(false);
     ramTable->resizeColumnsToContents();
     okButton = new QPushButton("OK");
@@ -39,11 +36,9 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
     applyButton->setCursor(Qt::PointingHandCursor);
     resetButton->setCursor(Qt::PointingHandCursor);
 
-    currentByte = new QLabel("Current Address: ");
 
     QVBoxLayout *buttonsLayout = new QVBoxLayout();
     QHBoxLayout *fullLayout = new QHBoxLayout();
-    buttonsLayout->addWidget(currentByte);
     buttonsLayout->addWidget(resetButton);
     buttonsLayout->addWidget(okButton);
     buttonsLayout->addWidget(applyButton);
@@ -52,16 +47,15 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
     instructionsTable = new QTableWidget(1, 3, this);
     instructionsTable->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     QStringList instructionsHeaderLabels;
-    instructionsHeaderLabels << "Op Code HEX" << "Mnemonic" << "Microcode Row";
+    instructionsHeaderLabels << "Op Code" << "Mnemonic" << "Microcode Row";
     instructionsTable->setHorizontalHeaderLabels(instructionsHeaderLabels);
     instructionsTable->verticalHeader()->hide();
 
     QSpinBox *opcode = new QSpinBox(this);
     opcode->setInputMethodHints(Qt::ImhDigitsOnly);
-    opcode->setPrefix("0x");
-    opcode->setDisplayIntegerBase(16);
+    opcode->setDisplayIntegerBase(2);
     opcode->setMinimum(0);
-    opcode->setMaximum(255);
+    opcode->setMaximum(15);
     instructionsTable->setCellWidget(0, 0, opcode);
 
     QTableWidgetItem *mnemonic = new QTableWidgetItem("");
@@ -69,6 +63,7 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
 
     QSpinBox *microcodeRow = new QSpinBox(this);
     microcodeRow->setInputMethodHints(Qt::ImhDigitsOnly);
+    microcodeRow->setDisplayIntegerBase(2);
     instructionsTable->setCellWidget(0, 2, microcodeRow);
 
 
@@ -108,7 +103,6 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
     connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancel()));
     connect(resetButton, SIGNAL(clicked()), this, SLOT(reset()));
     connect(addMnemonic, SIGNAL(clicked()), this, SLOT(addMnemonic()));
-    connect(ramTable, SIGNAL(itemSelectionChanged()), this, SLOT(byte()));
 }
 
 ramWindow::~ramWindow(){}
@@ -301,17 +295,6 @@ void ramWindow::cellChanged(int value)
 }
 
 
-void ramWindow::byte()
-{
-    QItemSelectionModel *itemModel = ramTable->selectionModel();
-    QModelIndexList indexList = itemModel->selectedIndexes();
-    if (indexList.isEmpty())  return;
-    int row = indexList.at(0).row();
-    int col = indexList.at(0).column();
-    int cell = row * 4 + col;
-    currentByte->setText(QString("Current Address: 0x%1").arg(cell, 4, 16, QChar('0')));
-}
-
 void ramWindow::addMnemonic()
 {
     instructionsTable->setRowCount(instructionsTable->rowCount() + 1);
@@ -319,10 +302,9 @@ void ramWindow::addMnemonic()
     currentInstructions[instructionsTable->rowCount() - 1].resize(instructionsTable->columnCount());
     QSpinBox *opcode = new QSpinBox(this);
     opcode->setInputMethodHints(Qt::ImhDigitsOnly);
-    opcode->setPrefix("0x");
-    opcode->setDisplayIntegerBase(16);
+    opcode->setDisplayIntegerBase(2);
     opcode->setMinimum(0);
-    opcode->setMaximum(255);
+    opcode->setMaximum(15);
     instructionsTable->setCellWidget(instructionsTable->rowCount() - 1, 0, opcode);
 
     QTableWidgetItem *mnemonic = new QTableWidgetItem("");
@@ -330,7 +312,14 @@ void ramWindow::addMnemonic()
 
     QSpinBox *microcodeRow = new QSpinBox(this);
     microcodeRow->setInputMethodHints(Qt::ImhDigitsOnly);
+    microcodeRow->setDisplayIntegerBase(2);
     instructionsTable->setCellWidget(instructionsTable->rowCount() - 1, 2, microcodeRow);
+    if (instructionsTable->rowCount() % 2 == 0)
+    {
+        opcode->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");
+        microcodeRow->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");
+        mnemonic->setBackground(QBrush(qRgb(204, 204, 204)));
+    }
 }
 
 void ramWindow::closeEvent(QCloseEvent *bar)

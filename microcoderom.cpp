@@ -3,8 +3,8 @@
 microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 {
     this->setWindowTitle("Microcode ROM");
-    table = new QTableWidget(100, 22, this);
-    hLabels << "next" << "cond" << "alu.opcode" << "ir.we" << "ir.oe"<< "pc.we" << "pc.oe" << "a.we" << "a.oe" << "x.we" << "y.we" << "z.we" << "z.oe" <<
+    table = new QTableWidget(100, 24, this);
+    hLabels << "next" << "cond" << "alu.opcode" << "ir.we" << "ir1.oe" << "ir2.oe" << "ir3.oe" << "pc.we" << "pc.oe" << "a.we" << "a.oe" << "x.we" << "y.we" << "z.we" << "z.oe" <<
                "mar.we"  << "mdrin.we" << "mdrin.oe" << "mdrout.we" << "mdrout.oe" << "gpioOut1" << "gpioOut2" << "mem.r/-w" << "mem.en";
     table->setHorizontalHeaderLabels(hLabels);
     table->setShowGrid(false);
@@ -39,7 +39,7 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 
     QHBoxLayout *vLayout = new QHBoxLayout();
     QVBoxLayout *buttonsLayout = new QVBoxLayout();
-    QLabel *aluInfo = new QLabel("<b><i>ALU Operations</i></b><br/>DO Do nothing: 0<br/>X + Y: 1<br/>X - Y: 10<br/>Shift X left: 11<br/>Shift X right: 100<br/>Pass X: 101<br/>Increment X: 110<br/>Decrement X: 111");
+    QLabel *aluInfo = new QLabel("<b><i>ALU Operations</i></b><br/>Do nothing: 0<br/>X + Y: 1<br/>X - Y: 10<br/>Shift X left: 11<br/>Shift X right: 100<br/>Pass X: 101<br/>Increment X: 110<br/>Decrement X: 111");
     QLabel *condInfo = new QLabel("<b><i>Next Row Conditions</i></b><br/>Do nothing: 0<br/>Z == 0: 1<br/>Z &gt; 0: 2<br/>Z &lt; 0: 3<br/>GPIO In 1: 4<br/>GPIO In 2: 5");
     buttonsLayout->addWidget(aluInfo);
     buttonsLayout->addWidget(condInfo);
@@ -79,7 +79,7 @@ void microcodeROM::readRom(QString *text)
     vLabels.clear();
     for (int row = 0; row < 6; row++)
     {
-        vLabels << QString::number(row);
+        vLabels << QString::number(row, 2);
         QStringList line = lines[row + 1].split("\t", Qt::SkipEmptyParts);
         for (int column = 0; column < table->columnCount(); column++)
         {
@@ -94,7 +94,7 @@ void microcodeROM::readRom(QString *text)
     }
     for (int row = 6; row < table->rowCount(); row++)
     {
-        vLabels << QString::number(row);
+        vLabels << QString::number(row, 2);
         QStringList line = lines[row + 1].split("\t", Qt::SkipEmptyParts);
         for (int column = 0; column < table->columnCount(); column++)
         {
@@ -174,7 +174,7 @@ void microcodeROM::reset(){
     QMessageBox::StandardButton reply = QMessageBox::question(this, "This will clear all elements in the table.", "Are you sure you want to reset the MicroCode ROM?");
     if (reply == QMessageBox::Yes)
     {
-        for (int row = 0; row < table->rowCount(); row++)
+        for (int row = 6; row < table->rowCount(); row++)
         {
             for (int column = 0; column < table->columnCount(); column++)
             {
