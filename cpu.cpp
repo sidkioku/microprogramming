@@ -587,7 +587,7 @@ void CPU::paintEvent(QPaintEvent *e)
     {
         painter.setPen(dashedRedPen);
         painter.drawLine(mdrOutReg->x() + mdrOutReg->width(), mdrOutReg->y() + mdrOutReg->height()/2, data->x() + 10, mdrOutReg->y() + mdrOutReg->height()/2);
-        painter.drawLine( data->x() + 10, mdrOutReg->y() + mdrOutReg->height()/2,  data->x() + 10, data->y() - 5);
+        painter.drawLine( data->x() + 10, mdrOutReg->y() + mdrOutReg->height()/2,  data->x() + 10, data->y() - 15);
         painter.drawPixmap( data->x() + 10 - 9, data->y() - 18, arrowDownRed->pixmap(18, 18));
     } else
     {
@@ -617,8 +617,11 @@ void CPU::paintEvent(QPaintEvent *e)
         painter.drawPixmap(ramButton->x() + ramButton->width()/2 - 9, data->y() - 18, arrowDown->pixmap(18, 18));
         painter.drawPixmap(ramButton->x() + ramButton->width()/2 - 9, ramButton->y() + ramButton->height(), arrowUp->pixmap(18, 18));
     }
-    painter.drawLine(ramButton->x() + ramButton->width()/2, ramButton->y() + ramButton->height() + 5, ramButton->x() + ramButton->width()/2, data->y() - 5);
+    painter.drawLine(ramButton->x() + ramButton->width()/2, ramButton->y() + ramButton->height() + 15, ramButton->x() + ramButton->width()/2, data->y() - 15);
 
+
+    //TODO: Microcode ROM -> GPIO Out
+    //TODO: GPIO In -> Conditions? Or Microcode ROM? Or another multiplexer?
     //    //Arrow GPIO 1 <-> Outer Data Bus
     //    painter.drawLine(gpio1->x() + gpio1->width()/2, gpio1->y() + gpio1->height(), gpio1->x() + gpio1->width()/2, data->y());
     //    painter.drawPixmap(gpio1->x() + gpio1->width()/2 - 6, gpio1->y() + gpio1->height(), arrowUp->pixmap(18, 18));
@@ -881,7 +884,10 @@ void CPU::nextStep()
 
     if (microcode->currentMROM[currentRow][3])
     {
-        instructionReg->setText(outputtext); //instruction register
+        instructionReg->setText(QString("").append(outputtext.leftRef(4))); //instruction register
+        instructionReg1->setText(QString("").append(outputtext.midRef(4, 4)));
+        instructionReg2->setText(QString("").append(outputtext.midRef(8, 4)));
+        instructionReg3->setText(QString("").append(outputtext.rightRef(4)));
     }
 
     if (microcode->currentMROM[currentRow][7]) progCounter->setText(outputtext); //program counter
@@ -967,12 +973,16 @@ void CPU::reset()
     mdrInReg->setText(QString("%1").arg(generator->bounded(256), 8, 2, QChar('0')));
     mdrOutReg->setText(QString("%1").arg(generator->bounded(256), 8, 2, QChar('0')));
     busButton->setText(QString("%1").arg(generator->bounded(256), 8, 2, QChar('0')));
-    instructionReg->setText(QString("%1").arg(generator->bounded(256), 8, 2, QChar('0')));
+    instructionReg->setText(QString("%1").arg(generator->bounded(16), 4, 2, QChar('0')));
+    instructionReg1->setText(QString("%1").arg(generator->bounded(16), 4, 2, QChar('0')));
+    instructionReg2->setText(QString("%1").arg(generator->bounded(16), 4, 2, QChar('0')));
+    instructionReg3->setText(QString("%1").arg(generator->bounded(16), 4, 2, QChar('0')));
     aReg->setText(QString("%1").arg(generator->bounded(256), 8, 2, QChar('0')));
     progCounter->setText("00000000");
     nextStepButton->setEnabled(true);
     nextInstructionButton->setEnabled(true);
-
+    nextStepButton->setText("Fetch Step");
+    phase = 0;
     this->update();
 }
 
