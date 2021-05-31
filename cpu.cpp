@@ -22,8 +22,25 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     QVBoxLayout *aLayout = new QVBoxLayout();
     QVBoxLayout *memLayout = new QVBoxLayout();
     QVBoxLayout *cpuLayout = new QVBoxLayout();
-    QGridLayout *gpioLayout = new QGridLayout();
 
+    ///GPIOs
+    gpioOut1 = new QRadioButton("Output Pin 1");
+    gpioOut2 = new QRadioButton("Output Pin 2");
+    gpioOut1->setStyleSheet("border: 1px solid black;");
+    gpioOut2->setStyleSheet("border: 1px solid black;");
+    gpioOut1->setMinimumSize(100, 23);
+    gpioOut2->setMinimumSize(100, 23);
+    gpioOut1->setAutoExclusive(false);
+    gpioOut2->setAutoExclusive(false);
+
+    gpioIn1 = new QRadioButton("Input Pin 1");
+    gpioIn2 = new QRadioButton("Input Pin 2");
+    gpioIn1->setStyleSheet("border: 1px solid black;");
+    gpioIn2->setStyleSheet("border: 1px solid black;");
+    gpioIn1->setMinimumSize(100, 23);
+    gpioIn2->setMinimumSize(100, 23);
+    gpioIn1->setAutoExclusive(false);
+    gpioIn2->setAutoExclusive(false);
 
     ///RAM Button
     ramButton = new QPushButton("External RAM");
@@ -75,21 +92,21 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     irLabel = new QLabel("Instruction Register");
     irLabel->setAlignment(Qt::AlignCenter);
     instructionReg = new QPushButton("0000");
-    instructionReg->setStyleSheet("border: 3px solid black;");
+    instructionReg->setStyleSheet("border: 3px solid black; border-right: 1px solid black; text-align: center;");
     instructionReg->setCursor(Qt::WhatsThisCursor);
     instructionReg->setMinimumSize(25, 23);
 
     instructionReg1 = new QPushButton("0000");
-    instructionReg1->setStyleSheet("border: 3px solid black; border-left: 0px; border-right: 1px solid black;");
+    instructionReg1->setStyleSheet("border: 3px solid black; border-left: 0px; border-right: 1px solid black; text-align: center;");
     instructionReg1->setCursor(Qt::WhatsThisCursor);
     instructionReg1->setMinimumSize(25, 23);
 
     instructionReg2 = new QPushButton("0000");
-    instructionReg2->setStyleSheet("border: 3px solid black; border-left: 0px; border-right: 1px solid black;");
+    instructionReg2->setStyleSheet("border: 3px solid black; border-left: 0px; border-right: 1px solid black; text-align: center;");
     instructionReg2->setCursor(Qt::WhatsThisCursor);
     instructionReg2->setMinimumSize(25, 23);
     instructionReg3 = new QPushButton("0000");
-    instructionReg3->setStyleSheet("border: 3px solid black; border-left: 0px");
+    instructionReg3->setStyleSheet("border: 3px solid black; border-left: 0px; text-align: center;");
     instructionReg3->setCursor(Qt::WhatsThisCursor);
     instructionReg3->setMinimumSize(25, 23);
 
@@ -139,6 +156,9 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
 
     pcLayout->addWidget(openMicrocode);
     pcLayout->addWidget(saveMicrocode);
+    pcLayout->addSpacing(25);
+    pcLayout->addWidget(gpioOut1);
+    pcLayout->addWidget(gpioOut2);
     pcLayout->addStretch();
     pcLayout->addWidget(pcLabel);
     pcLayout->addWidget(progCounter);
@@ -164,6 +184,9 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
 
     aLayout->addWidget(openRAM);
     aLayout->addWidget(saveRAM);
+    aLayout->addSpacing(25);
+    aLayout->addWidget(gpioIn1);
+    aLayout->addWidget(gpioIn2);
     aLayout->addStretch();
     aLayout->addWidget(aLabel);
     aLayout->addWidget(aReg);
@@ -214,23 +237,14 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     romButton->setMinimumSize(100, 600);
     romButton->setStyleSheet("border: 3px solid black;");
 
-    ///GPIOs
-    gpioOut1 = new QRadioButton("Output Pin 1");
-    gpioOut2 = new QRadioButton("Output Pin 2");
-    gpioOut1->setAutoExclusive(false);
-    gpioOut2->setAutoExclusive(false);
 
 
-    gpioIn1 = new QRadioButton("Input Pin 1");
-    gpioIn2 = new QRadioButton("Input Pin 2");
-    gpioIn1->setAutoExclusive(false);
-    gpioIn2->setAutoExclusive(false);
 
-    gpioLayout->addWidget(gpioIn1, 0, 0, Qt::AlignLeft);
-    gpioLayout->addWidget(gpioIn2, 1, 0, Qt::AlignLeft);
-    gpioLayout->addWidget(gpioOut1, 0, 1, Qt::AlignRight);
-    gpioLayout->addWidget(gpioOut2, 1, 1, Qt::AlignRight);
-    gpioLayout->setColumnStretch(2, 1);
+//    gpioLayout->addWidget(gpioIn1, 0, 0, Qt::AlignLeft);
+//    gpioLayout->addWidget(gpioIn2, 1, 0, Qt::AlignLeft);
+//    gpioLayout->addWidget(gpioOut1, 0, 1, Qt::AlignRight);
+//    gpioLayout->addWidget(gpioOut2, 1, 1, Qt::AlignRight);
+//    gpioLayout->setColumnStretch(2, 1);
 
     irLayout->addWidget(nextInstructionButton);
     irLayout->addWidget(nextStepButton);
@@ -266,7 +280,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     completeLayout->addLayout(ramLayout);
 
     QVBoxLayout *fullLayout = new QVBoxLayout();
-    fullLayout->addLayout(gpioLayout);
+//    fullLayout->addLayout(gpioLayout);
     fullLayout->addLayout(completeLayout);
     widget->setLayout(fullLayout);
     this->setCentralWidget(widget);
@@ -332,27 +346,27 @@ void CPU::paintEvent(QPaintEvent *e)
     if(outputenable[0] || outputenable[1] || outputenable[2])
     {
         painter.setPen(redPen);
-        painter.drawPixmap(instructionReg->x() + instructionReg->width() / 4 - 9, bus->y() - 15, arrowDownRed->pixmap(18, 18));
+        painter.drawPixmap(instructionReg1->x() - 9, bus->y() - 15, arrowDownRed->pixmap(18, 18));
     }
     else
     {
         painter.setPen(blackPen);
-        painter.drawPixmap(instructionReg->x() + instructionReg->width() / 4 - 9, bus->y() - 15, arrowDown->pixmap(18, 18));
+        painter.drawPixmap(instructionReg1->x() - 9, bus->y() - 15, arrowDown->pixmap(18, 18));
     }
-    painter.drawLine(instructionReg->x() + instructionReg->width() / 4, instructionReg->y() + instructionReg->height(), instructionReg->x() + instructionReg->width() / 4, bus->y() - 5);
+    painter.drawLine(instructionReg1->x(), instructionReg->y() + instructionReg->height(), instructionReg1->x(), bus->y() - 5);
 
     //Arrow BUS -> Instruction Register
     if (writeenable[0])
     {
         painter.setPen(redPen);
-        painter.drawPixmap(instructionReg->x() + 3 * instructionReg->width() / 4 - 9, instructionReg->y() + instructionReg->height() - 3, arrowUpRed->pixmap(18, 18));
+        painter.drawPixmap(instructionReg3->x() - 9, instructionReg->y() + instructionReg->height() - 3, arrowUpRed->pixmap(18, 18));
     }
     else
     {
         painter.setPen(blackPen);
-        painter.drawPixmap(instructionReg->x() + 3 * instructionReg->width() / 4 - 9, instructionReg->y() + instructionReg->height() - 3, arrowUp->pixmap(18, 18));
+        painter.drawPixmap(instructionReg3->x() - 9, instructionReg->y() + instructionReg->height() - 3, arrowUp->pixmap(18, 18));
     }
-    painter.drawLine(instructionReg->x() + 3 * instructionReg->width() / 4, bus->y(), instructionReg->x() + 3 * instructionReg->width() / 4, instructionReg->y() + instructionReg->height() + 5);
+    painter.drawLine(instructionReg3->x(), bus->y(), instructionReg3->x(), instructionReg->y() + instructionReg->height() + 5);
 
 
 
@@ -621,7 +635,24 @@ void CPU::paintEvent(QPaintEvent *e)
 
 
     //TODO: Microcode ROM -> GPIO Out
-    //TODO: GPIO In -> Conditions? Or Microcode ROM? Or another multiplexer?
+    painter.setPen(blackPen);
+    painter.drawLine(romButton->x() + romButton->width(), gpioOut1->y() + gpioOut1->height() / 2, gpioOut1->x() - 9, gpioOut1->y() + gpioOut1->height() / 2);
+    painter.drawPixmap(gpioOut1->x() - 18, gpioOut1->y() + gpioOut1->height() / 2 - 9, arrowRight->pixmap(18, 18));
+
+    painter.drawLine(romButton->x() + romButton->width(), gpioOut2->y() + gpioOut2->height() / 2, gpioOut2->x() - 9, gpioOut2->y() + gpioOut2->height() / 2);
+    painter.drawPixmap(gpioOut2->x() - 18, gpioOut2->y() + gpioOut2->height() / 2 - 9, arrowRight->pixmap(18, 18));
+
+
+    //TODO: GPIO In -> Microcode ROM
+    painter.drawLine(gpioIn1->x() + gpioIn1->width(), gpioIn1->y() + gpioIn1->height() / 2, gpioIn1->x() + gpioIn1->width() + 50, gpioIn1->y() + gpioIn1->height() / 2);
+    painter.drawLine(gpioIn1->x() + gpioIn1->width() + 50, gpioIn1->y() + gpioIn1->height() / 2, gpioIn1->x() + gpioIn1->width() + 50, gpioIn2->y() + gpioIn2->height() + 50);
+    painter.drawLine(gpioIn1->x() + gpioIn1->width() + 50, gpioIn2->y() + gpioIn2->height() + 50, romButton->x() + romButton->width() + 9, gpioIn2->y() + gpioIn2->height() + 50);
+    painter.drawPixmap(romButton->x() + romButton->width(), gpioIn2->y() + gpioIn2->height() + 50 - 9, arrowLeft->pixmap(18, 18));
+
+    painter.drawLine(gpioIn2->x() + gpioIn2->width(), gpioIn2->y() + gpioIn2->height() / 2, gpioIn2->x() + gpioIn2->width() + 25, gpioIn2->y() + gpioIn2->height() / 2);
+    painter.drawLine(gpioIn2->x() + gpioIn2->width() + 25, gpioIn2->y() + gpioIn2->height() / 2, gpioIn2->x() + gpioIn2->width() + 25, gpioIn2->y() + gpioIn2->height() + 25);
+    painter.drawLine(gpioIn2->x() + gpioIn2->width() + 25, gpioIn2->y() + gpioIn2->height() + 25, romButton->x() + romButton->width() + 9, gpioIn2->y() + gpioIn2->height() + 25);
+    painter.drawPixmap(romButton->x() + romButton->width(), gpioIn2->y() + gpioIn2->height() + 25 - 9, arrowLeft->pixmap(18, 18));
     //    //Arrow GPIO 1 <-> Outer Data Bus
     //    painter.drawLine(gpio1->x() + gpio1->width()/2, gpio1->y() + gpio1->height(), gpio1->x() + gpio1->width()/2, data->y());
     //    painter.drawPixmap(gpio1->x() + gpio1->width()/2 - 6, gpio1->y() + gpio1->height(), arrowUp->pixmap(18, 18));
