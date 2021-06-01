@@ -6,6 +6,9 @@ bool writeenable[9];
 bool outputenable[9];
 int condition = 0;
 int phase = 0;
+int nextRow = 0;
+bool deadend = false;
+
 QRandomGenerator *generator = new QRandomGenerator();
 
 
@@ -240,11 +243,11 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
 
 
 
-//    gpioLayout->addWidget(gpioIn1, 0, 0, Qt::AlignLeft);
-//    gpioLayout->addWidget(gpioIn2, 1, 0, Qt::AlignLeft);
-//    gpioLayout->addWidget(gpioOut1, 0, 1, Qt::AlignRight);
-//    gpioLayout->addWidget(gpioOut2, 1, 1, Qt::AlignRight);
-//    gpioLayout->setColumnStretch(2, 1);
+    //    gpioLayout->addWidget(gpioIn1, 0, 0, Qt::AlignLeft);
+    //    gpioLayout->addWidget(gpioIn2, 1, 0, Qt::AlignLeft);
+    //    gpioLayout->addWidget(gpioOut1, 0, 1, Qt::AlignRight);
+    //    gpioLayout->addWidget(gpioOut2, 1, 1, Qt::AlignRight);
+    //    gpioLayout->setColumnStretch(2, 1);
 
     irLayout->addWidget(nextInstructionButton);
     irLayout->addWidget(nextStepButton);
@@ -280,7 +283,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     completeLayout->addLayout(ramLayout);
 
     QVBoxLayout *fullLayout = new QVBoxLayout();
-//    fullLayout->addLayout(gpioLayout);
+    //    fullLayout->addLayout(gpioLayout);
     fullLayout->addLayout(completeLayout);
     widget->setLayout(fullLayout);
     this->setCentralWidget(widget);
@@ -744,18 +747,32 @@ void CPU::nextInstruction()
         break;
     }
 
- nextStep();
+    nextStep();
 }
 
 void CPU::nextStep()
 {
-    int nextRow = microcode->currentMROM[currentRow][0];
+    qDebug() << nextRow;
     switch (phase) {
     case 0: //Fetch
         if (nextRow == 0)
         {
             nextStepButton->setText("Execute Step");
             phase++;
+            for (int i = 0; i < (int) ram->currentInstructions.size(); i++)
+            {
+                qDebug() << ram->currentInstructions[0][0].toInt(nullptr, 10) << "\t" << instructionReg->text().toInt(nullptr, 2);
+                if (ram->currentInstructions[i][0].toInt(nullptr, 10) == instructionReg->text().toInt(nullptr, 2))
+                {
+                    nextRow = ram->currentInstructions[i][2].toInt();
+                    qDebug() << "Changed: " << nextRow;
+                }
+            }
+            if (nextRow == 0) deadend = true;
+        }
+        else
+        {
+            nextRow = microcode->currentMROM[currentRow][0];
         }
         if (currentRow == 5)
         {
@@ -780,11 +797,11 @@ void CPU::nextStep()
         }
 
         ///Next Row Condition
-        bool values[microcode->currentMROM[currentRow].size() - 2];
-        for (int column = 0; column < (int)microcode->currentMROM[currentRow].size() - 2; column++)
-        {
-            values[column] = microcode->currentMROM[currentRow][column];
-        }
+        //        bool values[microcode->currentMROM[currentRow].size() - 2];
+        //        for (int column = 0; column < (int)microcode->currentMROM[currentRow].size() - 2; column++)
+        //        {
+        //            values[column] = microcode->currentMROM[currentRow][column];
+        //        }
         bool lsb = nextRow & 1;
         condition = microcode->currentMROM[currentRow][1];
         bool cond = 0;
@@ -997,6 +1014,7 @@ void CPU::reset()
 {
     currentInstruction = 0;
     currentRow = 1;
+    nextRow = 2;
     xReg->setText(QString("%1").arg(generator->bounded(256), 8, 2, QChar('0')));
     yReg->setText(QString("%1").arg(generator->bounded(256), 8, 2, QChar('0')));
     zReg->setText(QString("%1").arg(generator->bounded(256), 8, 2, QChar('0')));

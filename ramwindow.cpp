@@ -116,7 +116,7 @@ QString ramWindow::saveRam()
         for (int col = 0; col < ramTable->columnCount(); col++)
         {
             if (currentRAM[row][col] == NULL) text.append("0");
-            else text.append(currentRAM[row][col]);
+            else text.append(QString::number(currentRAM[row][col], 10));
             text.append("\t");
         }
         text.append("\n");
@@ -143,9 +143,6 @@ void ramWindow::readRam(QString *text)
 {
     ramTable->clear();
     instructionsTable->clear();
-    ramTable->setToolTip("8kB RAM");
-    hLabels << "Operation Code" << "Register 1" << "Register 2" << "Register 3";
-    ramTable->setHorizontalHeaderLabels(hLabels);
     QStringList vLabels;
     ramTable->setShowGrid(false);
 
@@ -156,15 +153,14 @@ void ramWindow::readRam(QString *text)
     while (row <= ramTable->rowCount())
     {
         QStringList columns = lines[row].split("\t");
-        vLabels << QString("0x%1").arg(row * 4, 4, 16, QChar('0'));
         for (int column = 0; column < ramTable->columnCount(); column++)
         {
             QSpinBox *spinBox = new QSpinBox(this);
             spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
-            spinBox->setDisplayIntegerBase(16);
-            spinBox->setMaximum(255);
+            spinBox->setDisplayIntegerBase(2);
+            spinBox->setMaximum(15);
             spinBox->setMinimum(0);
-            spinBox->setPrefix("0x");
+            spinBox->setToolTip(QString("Address: %1").arg(row * 4 + column));
             spinBox->setValue(columns[column].toInt());
             connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
             ramTable->setCellWidget(row - 1, column, spinBox);
@@ -172,7 +168,6 @@ void ramWindow::readRam(QString *text)
         }
         row++;
     }
-    ramTable->setVerticalHeaderLabels(vLabels);
     ramTable->setSortingEnabled(false);
     ramTable->resizeColumnsToContents();
     instructionsTable->setRowCount(lines[row].toInt());
@@ -183,10 +178,9 @@ void ramWindow::readRam(QString *text)
 
         QSpinBox *opcode = new QSpinBox(this);
         opcode->setInputMethodHints(Qt::ImhDigitsOnly);
-        opcode->setPrefix("0x");
-        opcode->setDisplayIntegerBase(16);
+        opcode->setDisplayIntegerBase(2);
         opcode->setMinimum(0);
-        opcode->setMaximum(255);
+        opcode->setMaximum(15);
         opcode->setValue(columns[0].toInt());
         instructionsTable->setCellWidget(row - ramTable->rowCount() - 2, 0, opcode);
 
@@ -196,6 +190,7 @@ void ramWindow::readRam(QString *text)
 
         QSpinBox *microcodeRow = new QSpinBox(this);
         microcodeRow->setInputMethodHints(Qt::ImhDigitsOnly);
+        microcodeRow->setDisplayIntegerBase(2);
         microcodeRow->setValue(columns[2].toInt());
         instructionsTable->setCellWidget(row - ramTable->rowCount() - 2, 2, microcodeRow);
 
@@ -229,8 +224,7 @@ void ramWindow::apply()
     {
         for (int column = 0; column < ramTable->columnCount(); column++)
         {
-            bool converted = true;
-            currentRAM[row][column] = ramTable->cellWidget(row, column)->property("value").toInt(&converted);
+            currentRAM[row][column] = ramTable->cellWidget(row, column)->property("value").toInt(nullptr);
 
         }
     }
