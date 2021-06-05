@@ -8,7 +8,7 @@ int condition = 0;
 int phase = 0;
 int nextRow = 0;
 bool deadend = false;
-
+bool fetching = true;
 QRandomGenerator *generator = new QRandomGenerator();
 
 
@@ -755,6 +755,7 @@ void CPU::nextStep()
     qDebug() << nextRow;
     switch (phase) {
     case 0: //Fetch
+        fetching = true;
         if (nextRow == 0)
         {
             nextStepButton->setText("Execute Step");
@@ -772,7 +773,14 @@ void CPU::nextStep()
         }
         else
         {
-            nextRow = microcode->currentMROM[currentRow][0];
+            if (currentRow == 0)
+            {
+                nextRow = 1;
+            }
+            else
+            {
+                nextRow = microcode->currentMROM[currentRow][0];
+            }
         }
         if (currentRow == 5)
         {
@@ -790,11 +798,14 @@ void CPU::nextStep()
         }
         break;
     case 1: //Execute
-        if (nextRow == 0)
+        fetching = false;
+        if (nextRow <= 1)
         {
+            fetching = true;
             nextStepButton->setText("Fetch Step");
             phase--;
         }
+        nextRow = microcode->currentMROM[currentRow][0];
 
         ///Next Row Condition
         //        bool values[microcode->currentMROM[currentRow].size() - 2];
@@ -957,8 +968,11 @@ void CPU::nextStep()
                 if (microcode->currentMROM[currentRow][16]) //mdrin.we
                 {
                     int address = marReg->text().toInt(nullptr, 2);
+                    if (fetching) address =  address * 4;
                     int row = address / 4;
                     int col = address % 4;
+
+                    qDebug() << address << row << col;
 
                     QString val = QString("%1").arg(ram->currentRAM[row][col], 4, 2, QChar('0'));
                     if (col == 0)
@@ -993,14 +1007,21 @@ void CPU::nextStep()
             else secondstepread = true;
         }
         else {
+            qDebug() << "Managed to get in here  1";
+
             if (secondstepwrite)
             {
-                if (microcode->currentMROM[currentRow][20]) //mdrout.oe
+                qDebug() << "Managed to get in here  2";
+
+                if (microcode->currentMROM[currentRow][19]) //mdrout.oe
                 {
+                    qDebug() << "Managed to get in here  3";
+
                     int address = marReg->text().toInt(nullptr, 2);
                     int row = address / 4;
                     int col = address % 4;
                     ram->currentRAM[row][col] = mdrOutReg->text().toInt(nullptr, 2);
+                    ram->changeValue(row, col, mdrOutReg->text().toInt(nullptr, 2));
                 }
             }
             else secondstepwrite = true;

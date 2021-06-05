@@ -32,16 +32,17 @@ public:
     int  currentRAM[2048][4];
     int getMicrocodeRow(int opcode);
     std::vector<std::vector<QString>> currentInstructions;
+    QTableWidget *ramTable;
+    void changeValue(int row, int col, int value);
+
 
 private:
-    QTableWidget *ramTable;
     QTableWidget *instructionsTable;
     QPushButton *okButton;
     QPushButton *applyButton;
     QPushButton *cancelButton;
     QPushButton *resetButton;
     QStringList hLabels;
-    int  tempRAM[16];
     void closeEvent(QCloseEvent *bar);
 
 
@@ -51,8 +52,8 @@ private slots:
     void apply();
     void cancel();
     void reset();
-    void cellChanged(int value);
     void addMnemonic();
+    void cellChanged(int value);
 
 
 };

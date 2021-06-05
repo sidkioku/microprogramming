@@ -160,11 +160,11 @@ void ramWindow::readRam(QString *text)
             spinBox->setDisplayIntegerBase(2);
             spinBox->setMaximum(15);
             spinBox->setMinimum(0);
-            spinBox->setToolTip(QString("Address: %1").arg(row * 4 + column));
+            spinBox->setToolTip(QString("Address: %1").arg((row - 1) * 4 + column));
             spinBox->setValue(columns[column].toInt());
             connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
             ramTable->setCellWidget(row - 1, column, spinBox);
-            if (row % 2 == 0) spinBox->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");
+            if ((row - 1) % 2 == 0) spinBox->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");
         }
         row++;
     }
@@ -196,6 +196,8 @@ void ramWindow::readRam(QString *text)
 
         row++;
     }
+    apply();
+    resetButton->setEnabled(true);
 
 }
 
@@ -334,4 +336,19 @@ void ramWindow::closeEvent(QCloseEvent *bar)
     else {
         bar->ignore();
     }
+}
+
+
+void ramWindow::changeValue(int row, int col, int value)
+{
+    QSpinBox *spinBox = new QSpinBox(this);
+    spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
+    spinBox->setDisplayIntegerBase(2);
+    spinBox->setMaximum(15);
+    spinBox->setMinimum(0);
+    spinBox->setToolTip(QString("Address: %1").arg(row * 4 + col));
+    if (row % 2 == 0) spinBox->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");
+    ramTable->setCellWidget(row, col, spinBox);
+    spinBox->setValue(value);
+
 }
