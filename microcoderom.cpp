@@ -84,7 +84,7 @@ void microcodeROM::readRom(QString *text)
         for (int column = 0; column < table->columnCount(); column++)
         {
             QSpinBox *spinBox = new QSpinBox(this);
-            spinBox->setReadOnly(true);
+            //spinBox->setReadOnly(true);
             spinBox->setDisplayIntegerBase(2);
             connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &microcodeROM::cellChanged);
             if (row % 2 == 0) spinBox->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");

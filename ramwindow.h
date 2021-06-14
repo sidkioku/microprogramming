@@ -52,7 +52,7 @@ private slots:
     void apply();
     void cancel();
     void reset();
-    void addMnemonic();
+    void addInstruction();
     void cellChanged(int value);
 
 

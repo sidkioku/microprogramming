@@ -100,6 +100,9 @@ private:
     QLabel *mdrOutLabel;
     QPushButton *busButton;
     QBoxLayout* drawAlu();
+    void executeMicrocodeRow();
+
+
 
     void closeEvent(QCloseEvent *event);
 
@@ -123,6 +126,7 @@ private slots:
     void ramFile();
     void saveRam();
     void gpioClick();
+
 
 };
 #endif // CPU_H
