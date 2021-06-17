@@ -131,7 +131,7 @@ QString ramWindow::saveRam()
     QString instructionSetInfo = QString("%1").arg(instructionsTable->rowCount());
     text.append(instructionSetInfo);
     text.append("\n");
-    qDebug() << instructionsTable->columnCount();
+   // qDebug() << instructionsTable->columnCount();
     for(int row = 0; row < instructionsTable->rowCount(); row++)
     {
         for (int col = 0; col < instructionsTable->columnCount(); col++)
@@ -164,7 +164,7 @@ void ramWindow::readRam(QString *text)
             QSpinBox *spinBox = new QSpinBox(this);
             spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
             spinBox->setDisplayIntegerBase(2);
-            spinBox->setMaximum(15);
+            spinBox->setMaximum(255);
             spinBox->setMinimum(0);
             spinBox->setToolTip(QString("Address: %1").arg((row - 1) * 4 + column));
             spinBox->setValue(columns[column].toInt());
@@ -194,12 +194,14 @@ void ramWindow::readRam(QString *text)
         opcode->setInputMethodHints(Qt::ImhDigitsOnly);
         opcode->setDisplayIntegerBase(2);
         opcode->setMinimum(0);
-        opcode->setMaximum(15);
+        opcode->setMaximum(255);
         opcode->setValue(columns[0].toInt());
+        connect(opcode, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
         instructionsTable->setCellWidget(row - ramTable->rowCount() - 2, 0, opcode);
 
 
         QTableWidgetItem *mnemonic = new QTableWidgetItem(columns[1]);
+
         instructionsTable->setItem(row - ramTable->rowCount() - 2, 1, mnemonic);
 
         QSpinBox *length = new QSpinBox(this);
@@ -207,12 +209,15 @@ void ramWindow::readRam(QString *text)
         length->setMinimum(1);
         length->setMaximum(4);
         length->setValue(columns[2].toInt());
+        connect(length, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
         instructionsTable->setCellWidget(row - ramTable->rowCount() - 2, 2, length);
 
         QSpinBox *microcodeRow = new QSpinBox(this);
         microcodeRow->setInputMethodHints(Qt::ImhDigitsOnly);
         microcodeRow->setDisplayIntegerBase(2);
         microcodeRow->setValue(columns[3].toInt());
+        connect(microcodeRow, QOverload<int>::of(&QSpinBox::valueChanged), this, &ramWindow::cellChanged);
+
         instructionsTable->setCellWidget(row - ramTable->rowCount() - 2, 3, microcodeRow);
 
         row++;
@@ -227,7 +232,7 @@ void ramWindow::readRam(QString *text)
     currentInstructions.resize(instructionsTable->rowCount());
     for (int row = 0; row < instructionsTable->rowCount(); row++)
     {
-        qDebug() << instructionsTable->columnCount();
+        //qDebug() << instructionsTable->columnCount();
         currentInstructions[row].resize(instructionsTable->columnCount());
 
     }
@@ -386,7 +391,7 @@ void ramWindow::changeValue(int row, int col, int value)
     QSpinBox *spinBox = new QSpinBox(this);
     spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
     spinBox->setDisplayIntegerBase(2);
-    spinBox->setMaximum(15);
+    spinBox->setMaximum(255);
     spinBox->setMinimum(0);
     spinBox->setToolTip(QString("Address: %1").arg(row * 4 + col));
     if (row % 2 == 0) spinBox->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");

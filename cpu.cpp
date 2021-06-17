@@ -757,7 +757,7 @@ void CPU::nextStep()
 {
   if (!deadend)
   {
-    qDebug() << "Next Row: " << nextRow;
+    qDebug() << "Current Row: " << currentRow;
     switch (phase) {
       case 0: //Fetch
       //TODO: fetching has to tell the cpu in which IR Register the code goes
@@ -791,6 +791,7 @@ void CPU::nextStep()
         phase--;
         nextStepButton->setText("Fetch Step");
         currentRow = 1;
+        nextRow = 2;
       }
       else
       {
@@ -1001,16 +1002,10 @@ void CPU::executeMicrocodeRow()
       else secondstepread = true;
     }
     else {
-      qDebug() << "Managed to get in here  1";
-
       if (secondstepwrite)
       {
-        qDebug() << "Managed to get in here  2";
-
         if (microcode->currentMROM[currentRow][19]) //mdrout.oe
         {
-          qDebug() << "Managed to get in here  3";
-
           int address = marReg->text().toInt(nullptr, 2);
           int row = address / 4;
           int col = address % 4;
@@ -1022,6 +1017,7 @@ void CPU::executeMicrocodeRow()
     }
   }
   currentRow = nextRow;
+  qDebug() << "Next Row: " << nextRow;
   this->update(); //update colors for writeEnable/outputEnable
 }
 
@@ -1031,6 +1027,7 @@ void CPU::reset()
   currentInstruction = 0;
   currentRow = 1;
   nextRow = 2;
+  fetchcount = 0;
   xReg->setText(QString("%1").arg(generator->bounded(256), 8, 2, QChar('0')));
   yReg->setText(QString("%1").arg(generator->bounded(256), 8, 2, QChar('0')));
   zReg->setText(QString("%1").arg(generator->bounded(256), 8, 2, QChar('0')));
