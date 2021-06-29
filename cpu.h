@@ -29,6 +29,7 @@
 #include <iostream>
 #include "microcoderom.h"
 #include "ramwindow.h"
+#include <QTimer>
 
 class CPU : public QMainWindow
 {
@@ -53,10 +54,9 @@ private:
     QFrame *leftBorder;
     QFrame *rightBorder;
 
-    QPushButton *nextInstructionButton;
-    QIcon *playIcon;
-    QIcon *pauseIcon;
-    QPushButton *nextStepButton;
+    QPushButton *multipleStepsButton;
+    QSpinBox *stepCounter;
+    QPushButton *singleStepButton;
     QPushButton *resetButton;
     QPushButton *openMicrocode;
     QPushButton *saveMicrocode;
@@ -66,11 +66,11 @@ private:
     QPushButton *ramButton;
 
     QPushButton *instructionReg;
-    QPushButton *instructionReg1;
-    QPushButton *instructionReg2;
-    QPushButton *instructionReg3;
     QPushButton *progCounter;
     QPushButton *aReg;
+    QPushButton *bReg;
+    QPushButton *cReg;
+    QPushButton *dReg;
 
     QPushButton *xReg;
     QPushButton *yReg;
@@ -82,6 +82,8 @@ private:
     QPushButton *mdrInReg;
     QPushButton *mdrOutReg;
 
+    QPushButton *hexbin;
+
     QRadioButton *gpioOut1;
     QRadioButton *gpioOut2;
 
@@ -92,6 +94,9 @@ private:
     QLabel *irLabel;
     QLabel *pcLabel;
     QLabel *aLabel;
+    QLabel *bLabel;
+    QLabel *cLabel;
+    QLabel *dLabel;
     QLabel *xLabel;
     QLabel *yLabel;
     QLabel *zLabel;
@@ -110,8 +115,8 @@ protected:
     void paintEvent(QPaintEvent *e);
 private slots:
     void microcodeOpen();
-    void nextInstruction();
-    void nextStep();
+    void multipleSteps();
+    void singleStep();
     void reset();
     void irExp();
     void pcExp();
@@ -126,6 +131,7 @@ private slots:
     void ramFile();
     void saveRam();
     void gpioClick();
+    void changeBase();
 
 
 };

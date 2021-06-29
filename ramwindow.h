@@ -30,14 +30,12 @@ public:
     QString saveRam();
     void readRam(QString *text);
     int  currentRAM[2048][4];
-    int getMicrocodeRow(int opcode);
-    std::vector<std::vector<QString>> currentInstructions;
     QTableWidget *ramTable;
     void changeValue(int row, int col, int value);
+    void changeBase(bool state);
 
 
 private:
-    QTableWidget *instructionsTable;
     QPushButton *okButton;
     QPushButton *applyButton;
     QPushButton *cancelButton;
@@ -52,7 +50,6 @@ private slots:
     void apply();
     void cancel();
     void reset();
-    void addInstruction();
     void cellChanged(int value);
 
 

@@ -21,6 +21,7 @@ public:
     QString saveRom();
     void readRom(QString *text);
     std::vector<std::vector<int>> currentMROM;
+    void changeBase(bool binary);
 
 
 private:
@@ -31,7 +32,8 @@ private:
     QPushButton *resetButton;
     QPushButton *addRowButton;
     QStringList hLabels;
-    QStringList vLabels;
+    QStringList vLabelsBinary;
+    QStringList vLabelsHex;
     std::vector<std::vector<int>> tempMROM;
     void closeEvent(QCloseEvent *bar);
 
