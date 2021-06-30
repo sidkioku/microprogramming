@@ -78,25 +78,7 @@ void microcodeROM::readRom(QString *text)
     table->setHorizontalHeaderLabels(hLabels);
     vLabelsBinary.clear();
     vLabelsHex.clear();
-    for (int row = 0; row < 6; row++)
-    {
-        vLabelsBinary << QString::number(row, 2);
-        vLabelsHex << QString("0x%1").arg(row, 2, 16, QChar('0'));
-        QStringList line = lines[row + 1].split("\t", Qt::SkipEmptyParts);
-        for (int column = 0; column < table->columnCount(); column++)
-        {
-            QSpinBox *spinBox = new QSpinBox(this);
-//            spinBox->setToolTip(table->takeHorizontalHeaderItem(column)->text());
-            //spinBox->setReadOnly(true);
-            spinBox->setDisplayIntegerBase(2);
-            connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &microcodeROM::cellChanged);
-            if (row % 2 == 0) spinBox->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");
-            spinBox->setSpecialValueText(" ");
-            spinBox->setValue(line[column].toInt());
-            table->setCellWidget(row, column, spinBox);
-        }
-    }
-    for (int row = 6; row < table->rowCount(); row++)
+    for (int row = 0; row < table->rowCount(); row++)
     {
         vLabelsBinary << QString::number(row, 2);
         vLabelsHex << QString("0x%1").arg(row, 2, 16, QChar('0'));
