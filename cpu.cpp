@@ -66,7 +66,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     singleStepButton->setMinimumSize(125, 23);
 
     ///Reset
-    resetButton = new QPushButton("Reset");
+    resetButton = new QPushButton("&Reset");
     resetButton->setMinimumSize(125, 23);
 
     ///Instruction Register
@@ -86,12 +86,12 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
 
 
     ///Open Microcode ROM
-    openMicrocode = new QPushButton("Open Microcode ROM...");
+    openMicrocode = new QPushButton("&Open Microcode ROM...");
     openMicrocode->setMinimumSize(125, 23);
     openMicrocode->setCursor(Qt::PointingHandCursor);
 
     ///Save Microcode ROM
-    saveMicrocode = new QPushButton("Save Microcode ROM...");
+    saveMicrocode = new QPushButton("&Save Microcode ROM...");
     saveMicrocode->setMinimumSize(125, 23);
     saveMicrocode->setCursor(Qt::PointingHandCursor);
 
@@ -126,12 +126,12 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     pcLayout->addWidget(progCounter);
 
     ///Open RAM
-    openRAM = new QPushButton("Open RAM...");
+    openRAM = new QPushButton("Open &RAM...");
     openRAM->setMinimumSize(125, 23);
     openRAM->setCursor(Qt::PointingHandCursor);
 
     ///Save RAM
-    saveRAM = new QPushButton("Save RAM...");
+    saveRAM = new QPushButton("Save RA&M...");
     saveRAM->setMinimumSize(125, 23);
     saveRAM->setCursor(Qt::PointingHandCursor);
 
@@ -270,7 +270,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     buttonsLayout->addLayout(cdLayout);
     buttonsLayout->addSpacing(50);
     buttonsLayout->addLayout(alu);
-    buttonsLayout->addSpacing(50);
+    buttonsLayout->addSpacing(75);
     buttonsLayout->addLayout(memLayout);
 
 
@@ -583,10 +583,21 @@ void CPU::paintEvent(QPaintEvent *e)
     painter.drawLine(zReg->x(), zReg->y() + zReg->height()/4, comparisons->x() + comparisons->width()/2, zReg->y() + zReg->height()/4);
     painter.drawLine(comparisons->x() + comparisons->width()/2, zReg->y() + zReg->height()/4, comparisons->x() + comparisons->width()/2, comparisons->y() + comparisons->height() + 5);
 
-    //  //Arrow IR -> Microcode ROM
-    //  painter.drawLine(instructionReg->x(), instructionReg->y() + instructionReg->height()/2, romButton->x() + 3 *romButton->width()/4,  instructionReg->y() + instructionReg->height()/2);
-    //  painter.drawLine(romButton->x() + 3 *romButton->width()/4, instructionReg->y() + instructionReg->height()/2, romButton->x() + 3 *romButton->width()/4, romButton->y() + romButton->height() + 5);
-    //  painter.drawPixmap(romButton->x() + 3 *romButton->width()/4 - 9, romButton->y() + romButton->height(), arrowUp->pixmap(18, 18));
+    //Arrow Carry -> ALU
+    if (outputenable[7]) //TODO: Fix outputenable location
+    {
+        painter.setPen(redPen);
+        painter.drawPixmap(aluButton->x() + aluButton->width(), aluButton->y() + aluButton->height()/2, arrowLeftRed->pixmap(18, 18));
+    }
+    else
+    {
+        painter.setPen(blackPen);
+        painter.drawPixmap(aluButton->x() + aluButton->width(), aluButton->y() + aluButton->height()/2 - 9, arrowLeft->pixmap(18, 18));
+        painter.drawPixmap(carryReg->x() + carryReg->width(), carryReg->y() + carryReg->height()/2 - 9, arrowLeft->pixmap(18, 18));
+    }
+    painter.drawLine(carryReg->x() + carryReg->width() + 5, carryReg->y() + carryReg->height()/2, carryReg->x() + carryReg->width() + 20, carryReg->y() + carryReg->height()/2);
+    painter.drawLine(carryReg->x() + carryReg->width() + 20, carryReg->y() + carryReg->height()/2, carryReg->x() + carryReg->width() + 20, bus->y());
+    painter.drawLine(carryReg->x() + carryReg->width() + 20, aluButton->y() + aluButton->height()/2, aluButton->x() + aluButton->width() + 5, aluButton->y() + aluButton->height()/2);
 
     ///Memory Lines
     //Arrow MDR IN -> BUS
@@ -899,8 +910,8 @@ void CPU::singleStep()
     outputenable[4] = microcode->currentMROM[currentRow][12]; //c register
     outputenable[5] = microcode->currentMROM[currentRow][14]; //d register
     outputenable[6] = microcode->currentMROM[currentRow][18]; //z register
-    outputenable[7] = microcode->currentMROM[currentRow][21]; //mdr in register
-    outputenable[8] = microcode->currentMROM[currentRow][23]; //mdr out register
+    outputenable[7] = microcode->currentMROM[currentRow][22]; //mdr in register
+    outputenable[8] = microcode->currentMROM[currentRow][24]; //mdr out register
 
     QString outputtext = busButton->text();
 
@@ -967,9 +978,9 @@ void CPU::singleStep()
     writeenable[6] = microcode->currentMROM[currentRow][15]; //x
     writeenable[7] = microcode->currentMROM[currentRow][16]; //y
     writeenable[8] = microcode->currentMROM[currentRow][17]; //z
-    writeenable[9] = microcode->currentMROM[currentRow][19]; //mar
-    writeenable[10] = microcode->currentMROM[currentRow][20]; //mdrin
-    writeenable[11] = microcode->currentMROM[currentRow][22]; //mdrout
+    writeenable[9] = microcode->currentMROM[currentRow][20]; //mar
+    writeenable[10] = microcode->currentMROM[currentRow][21]; //mdrin
+    writeenable[11] = microcode->currentMROM[currentRow][23]; //mdrout
 
 
     if (writeenable[0]) instructionReg->setText(outputtext); //instruction register
@@ -984,8 +995,8 @@ void CPU::singleStep()
     if (writeenable[11]) mdrOutReg->setText(outputtext); //mdr out register
 
 
-    gpioOut1->setChecked(microcode->currentMROM[currentRow][20]);
-    gpioOut2->setChecked(microcode->currentMROM[currentRow][21]);
+    gpioOut1->setChecked(microcode->currentMROM[currentRow][25]);
+    gpioOut2->setChecked(microcode->currentMROM[currentRow][26]);
 
     ///Operation Code
     if (writeenable[8])
@@ -996,35 +1007,63 @@ void CPU::singleStep()
         {
         case 1: //ADD
             result = xReg->text().toInt(nullptr, base) + yReg->text().toInt(nullptr, base);
+            if (result > 255)
+            {
+                result = result - 256;
+                carryReg->setText("1");
+            }
             break;
-        case 2: //SUB
+        case 2: //ADD with Carry Flag
+            result = xReg->text().toInt(nullptr, base) + yReg->text().toInt(nullptr, base) + carryReg->text().toInt(nullptr, base);
+            if (result > 255)
+            {
+                result = result - 256;
+                carryReg->setText("1");
+            }
+            break;
+        case 3: //SUB
             result = xReg->text().toInt(nullptr, base) - yReg->text().toInt(nullptr, base);
             break;
-        case 3: //BITSHIFT X LEFT
+        case 4: //BITSHIFT X LEFT
             result = xReg->text().toInt(nullptr, base) << 1;
+            if (result > 255)
+            {
+                result = result - 256;
+                carryReg->setText("1");
+            }
             break;
-        case 4: //BITSHIFT X RIGHT
+        case 5: //BITSHIFT X RIGHT
             result = xReg->text().toInt(nullptr, base) >> 1;
+            if (result > 255)
+            {
+                result = result - 256;
+                carryReg->setText("1");
+            }
             break;
-        case 5: //PASS X
+        case 6: //PASS X
             result = xReg->text().toInt(nullptr, base);
             break;
-        case 6: //INCREMENT X
+        case 7: //INCREMENT X
             result = xReg->text().toInt(nullptr, base) + 1;
+            if (result > 255)
+            {
+                result = result - 256;
+                carryReg->setText("1");
+            }
             break;
-        case 7: //DECREMENT X
+        case 8: //DECREMENT X
             result = xReg->text().toInt(nullptr, base) - 1;
             break;
-        case 8: //X AND Y
+        case 9: //X AND Y
             result = xReg->text().toInt(nullptr, base) & yReg->text().toInt(nullptr, base);
             break;
-        case 9: //X OR Y
+        case 10: //X OR Y
             result = xReg->text().toInt(nullptr, base) | yReg->text().toInt(nullptr, base);
             break;
-        case 10: //X XOR Y
+        case 11: //X XOR Y
             result = xReg->text().toInt(nullptr, base) ^ yReg->text().toInt(nullptr, base);
             break;
-        case 11: //NOT X
+        case 12: //NOT X
             result = ~xReg->text().toInt(nullptr, base);
             break;
         }
@@ -1032,10 +1071,11 @@ void CPU::singleStep()
         else zReg->setText(QString("0x%1").arg(result, fieldWidth, base, QChar('0')));
     }
     ///Communication with external RAM
-    if (microcode->currentMROM[currentRow][27]) //mem.en
+    if (microcode->currentMROM[currentRow][28]) //mem.en
     {
-        if (microcode->currentMROM[currentRow][26]) //mem.r
+        if (microcode->currentMROM[currentRow][27]) //mem.r
         {
+
             if (secondstepread)
             {
                 if (writeenable[10]) //mdrin.we
@@ -1067,7 +1107,7 @@ void CPU::singleStep()
         }
     }
 
-
+    if (microcode->currentMROM[currentRow][19]) carryReg->setText("0");
     currentRow = nextRow;
     qDebug() << "Next Row: " << nextRow;
     this->update(); //update colors in GUI
@@ -1163,10 +1203,38 @@ QBoxLayout* CPU::drawAlu()
     QVBoxLayout *xLayout = new QVBoxLayout();
     QVBoxLayout *yLayout = new QVBoxLayout();
     QHBoxLayout *aluInLayout = new QHBoxLayout();
+    QVBoxLayout *aluOutLayout = new QVBoxLayout();
+    QHBoxLayout *regLayout = new QHBoxLayout();
+    QHBoxLayout *labelLayout = new QHBoxLayout();
+
+
+    zReg = new QPushButton("00000000");
+    zReg->setStyleSheet("border: 3px solid black;");
+    zReg->setCursor(Qt::WhatsThisCursor);
+    zReg->setMinimumSize(100, 23);
+
+    carryReg = new QPushButton("0");
+    carryReg->setCursor(Qt::WhatsThisCursor);
+    carryReg->setFixedSize(25, 23);
+    carryReg->setStyleSheet("border: 3px solid black;");
+
+    regLayout->addWidget(zReg);
+    regLayout->addWidget(carryReg);
+
 
     zLabel = new QLabel("Z Register");
     zLabel->setAlignment(Qt::AlignCenter);
-    zLabel->setMinimumSize(125, 23);
+    zLabel->setMinimumSize(100, 23);
+
+    carryLabel = new QLabel("C");
+    carryLabel->setAlignment(Qt::AlignCenter);
+    carryLabel->setFixedSize(25, 23);
+
+    labelLayout->addWidget(zLabel);
+    labelLayout->addWidget(carryLabel);
+
+    aluOutLayout->addLayout(labelLayout);
+    aluOutLayout->addLayout(regLayout);
 
     xLabel = new QLabel("X Register");
     xLabel->setAlignment(Qt::AlignHCenter|Qt::AlignBottom);
@@ -1207,12 +1275,8 @@ QBoxLayout* CPU::drawAlu()
     aluButton->setMinimumSize(200, 23);
 
 
-    zReg = new QPushButton("00000000");
-    zReg->setStyleSheet("border: 3px solid black;");
-    zReg->setCursor(Qt::WhatsThisCursor);
-    zReg->setMinimumSize(125, 23);
-    aluLayout->addWidget(zLabel);
-    aluLayout->addWidget(zReg);
+
+    aluLayout->addLayout(aluOutLayout);
     aluLayout->addSpacing(20);
     aluLayout->addWidget(aluButton);
     aluLayout->addLayout(aluInLayout);

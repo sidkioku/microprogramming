@@ -77,6 +77,7 @@ private:
     QPushButton *aluButton;
     QPushButton *comparisons;
     QPushButton *zReg;
+    QPushButton *carryReg;
 
     QPushButton *marReg;
     QPushButton *mdrInReg;
@@ -100,6 +101,7 @@ private:
     QLabel *xLabel;
     QLabel *yLabel;
     QLabel *zLabel;
+    QLabel *carryLabel;
     QLabel *marLabel;
     QLabel *mdrInLabel;
     QLabel *mdrOutLabel;

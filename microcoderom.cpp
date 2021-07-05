@@ -3,8 +3,8 @@
 microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 {
     this->setWindowTitle("Microcode ROM");
-    table = new QTableWidget(100, 28, this);
-    hLabels << "next" << "cond" << "alu.opcode" << "ir.we" << "ir.oe" << "pc.we" << "pc.oe" << "a.we" << "a.oe" << "b.we" << "b.oe" << "c.we" << "c.oe" << "d.we" << "d.oe" << "x.we" << "y.we" << "z.we" << "z.oe" <<
+    table = new QTableWidget(100, 29, this);
+    hLabels << "next" << "cond" << "alu.opcode" << "ir.we" << "ir.oe" << "pc.we" << "pc.oe" << "a.we" << "a.oe" << "b.we" << "b.oe" << "c.we" << "c.oe" << "d.we" << "d.oe" << "x.we" << "y.we" << "z.we" << "z.oe" << "carry=0" <<
                "mar.we"  << "mdrin.we" << "mdrin.oe" << "mdrout.we" << "mdrout.oe" << "gpioOut1" << "gpioOut2" << "mem.r/-w" << "mem.en";
     table->setHorizontalHeaderLabels(hLabels);
     table->setShowGrid(false);
@@ -39,7 +39,7 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 
     QHBoxLayout *vLayout = new QHBoxLayout();
     QVBoxLayout *buttonsLayout = new QVBoxLayout();
-    QLabel *aluInfo = new QLabel("<b><i>ALU Operations</i></b><br/>Do nothing: 0<br/>X + Y: 1<br/>X - Y: 2<br/>Shift X left: 3<br/>Shift X right: 4<br/>Pass X: 5<br/>Increment X: 6<br/>Decrement X: 7<br/>X AND Y: 8<br/>X OR Y: 9<br/>X XOR Y: 10<br/>Invert X: 11");
+    QLabel *aluInfo = new QLabel("<b><i>ALU Operations</i></b><br/>Do nothing: 0<br/>X + Y: 1<br/>X + Y + Carry: 2<br/>X - Y: 3<br/>Shift X left: 4<br/>Shift X right: 5<br/>Pass X: 6<br/>Increment X: 7<br/>Decrement X: 8<br/>X AND Y: 9<br/>X OR Y: 10<br/>X XOR Y: 11<br/>Invert X: 12");
     QLabel *condInfo = new QLabel("<b><i>Next Row Conditions</i></b><br/>Do nothing: 0<br/>Z == 0: 1<br/>Z &gt; 0: 2<br/>Z &lt; 0: 3<br/>Z &gt;= 0: 4<br/>Z &lt;= 0: 5<br/>3 LSBs of Z: 6<br/>3 MSBs of IR: 7<br/>GPIO In 1: 8<br/>GPIO In 2: 9<br/>");
     buttonsLayout->addWidget(aluInfo);
     buttonsLayout->addWidget(condInfo);
@@ -104,7 +104,7 @@ void microcodeROM::readRom(QString *text)
                 break;
             case 2:
                 //ALU Operations
-                spinBox->setMaximum(12); //ADD, SUB, SHIFTLEFT, SHIFTRIGHT, PASS, COMPARE, INCREMENT, DECREMENT, AND, OR, XOR, INVERT (in this order)
+                spinBox->setMaximum(12); //ADD, ADD with Carry, SUB, SHIFTLEFT, SHIFTRIGHT, PASS, COMPARE, INCREMENT, DECREMENT, AND, OR, XOR, INVERT (in this order)
                 break;
             default:
                 spinBox->setMaximum(1);
