@@ -740,49 +740,57 @@ void CPU::microcodeFile()
 {
     QString readMicrocode = QFileDialog::getOpenFileName(this, "Open Microcode ROM...", QDir::homePath(), "ROM Files (*.rom)");
     QFile file(readMicrocode);
-    file.open(QIODevice::ReadOnly);
-    QTextStream in(&file);
-    QString text = in.readAll();
-    file.close();
-    microcode->readRom(&text);
-    singleStepButton->setDisabled(true);
-    multipleStepsButton->setDisabled(true);
+    if (file.open(QIODevice::ReadOnly))
+    {
+        QTextStream in(&file);
+        QString text = in.readAll();
+        file.close();
+        microcode->readRom(&text);
+        singleStepButton->setDisabled(true);
+        multipleStepsButton->setDisabled(true);
+    }
 }
 
 void CPU::saveRom()
 {
     QString filename = QFileDialog::getSaveFileName(this, "Save Microcode ROM...", QDir::homePath(), "ROM Files (*.rom)");
     QFile f(filename);
-    f.open(QIODevice::WriteOnly);
-    QTextStream out(&f);
-    QString text = microcode->saveRom();
-    out << text;
-    f.flush();
-    f.close();
+    if (f.open(QIODevice::WriteOnly))
+    {
+        QTextStream out(&f);
+        QString text = microcode->saveRom();
+        out << text;
+        f.flush();
+        f.close();
+    }
 }
 
 void CPU::ramFile() {
     QString readRAM = QFileDialog::getOpenFileName(this, "Open RAM File...", QDir::homePath(), "RAM Files (*.ram)");
     QFile file(readRAM);
-    file.open(QIODevice::ReadOnly);
-    QTextStream in(&file);
-    QString text = in.readAll();
-    file.close();
-    ram->readRam(&text);
-    singleStepButton->setDisabled(true);
-    multipleStepsButton->setDisabled(true);
+    if (file.open(QIODevice::ReadOnly))
+    {
+        QTextStream in(&file);
+        QString text = in.readAll();
+        file.close();
+        ram->readRam(&text);
+        singleStepButton->setDisabled(true);
+        multipleStepsButton->setDisabled(true);
+    }
 }
 
 void CPU::saveRam()
 {
     QString filename = QFileDialog::getSaveFileName(this, "Save RAM File...", QDir::homePath(), "RAM File (*.ram)");
     QFile f(filename);
-    f.open(QIODevice::WriteOnly);
-    QTextStream out(&f);
-    QString text = ram->saveRam();
-    out << text;
-    f.flush();
-    f.close();
+    if (f.open(QIODevice::WriteOnly))
+    {
+        QTextStream out(&f);
+        QString text = ram->saveRam();
+        out << text;
+        f.flush();
+        f.close();
+    }
 }
 
 void CPU::gpioClick()
@@ -884,13 +892,13 @@ void CPU::singleStep()
     case 5:// <= 0 ?
         cond = zReg->text().toInt(nullptr, base) <= 0;
         break;
-    case 6:// 3 LSBs of Z
+    case 6:// 4 LSBs of Z
         cond = zReg->text().toInt(nullptr, base);
-        cond = cond & 7;
+        cond = cond & 15;
         break;
-    case 7:// 3 MSBs of IR
+    case 7:// 4 MSBs of IR
         cond = instructionReg->text().toInt(nullptr, base);
-        cond = (cond & 224) >> 5;
+        cond = (cond & 240) >> 4;
         break;
     case 8: //GPIO In 1
         cond = gpioIn1->isChecked();

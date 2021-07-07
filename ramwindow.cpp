@@ -14,7 +14,6 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
         for (int column = 0; column < ramTable->columnCount(); column++)
         {
             QSpinBox *spinBox = new QSpinBox(this);
-            spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
             spinBox->setDisplayIntegerBase(2);
             spinBox->setMaximum(255);
             spinBox->setMinimum(0);
@@ -105,7 +104,6 @@ void ramWindow::readRam(QString *text)
         {
             QSpinBox *spinBox = new QSpinBox(this);
             spinBox->setSpecialValueText(" ");
-            spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
             spinBox->setDisplayIntegerBase(2);
             spinBox->setMaximum(255);
             spinBox->setMinimum(0);
@@ -180,7 +178,6 @@ void ramWindow::reset()
 
 void ramWindow::cellChanged(int value)
 {
-
     if (value != 0) resetButton->setEnabled(true);
     applyButton->setEnabled(true);
 }
@@ -209,16 +206,7 @@ void ramWindow::closeEvent(QCloseEvent *bar)
 
 void ramWindow::changeValue(int row, int col, int value)
 {
-    QSpinBox *spinBox = new QSpinBox(this);
-    spinBox->setInputMethodHints(Qt::ImhDigitsOnly);
-    spinBox->setDisplayIntegerBase(2);
-    spinBox->setMaximum(255);
-    spinBox->setMinimum(0);
-    spinBox->setToolTip(QString("Address: %1").arg(row * 4 + col));
-    if (row % 2 == 0) spinBox->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");
-    ramTable->setCellWidget(row, col, spinBox);
-    spinBox->setValue(value);
-
+    ramTable->cellWidget(row, col)->setProperty("value", value);
 }
 
 void ramWindow::changeBase(bool binary)
