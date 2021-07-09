@@ -75,6 +75,7 @@ void microcodeROM::readRom(QString *text)
     table->clear();
     QStringList lines = text->split("\n", Qt::SkipEmptyParts);
     table->setRowCount(lines[0].toInt());
+    currentMROM.resize(table->rowCount(), std::vector<int>(table->columnCount()));
     table->setHorizontalHeaderLabels(hLabels);
     vLabelsBinary.clear();
     vLabelsHex.clear();
