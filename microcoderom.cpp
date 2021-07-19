@@ -1,5 +1,6 @@
 #include "cpu.h"
 #include "microcoderom.h"
+
 microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 {
     this->setWindowTitle("Microcode ROM");
@@ -39,8 +40,8 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
 
     QHBoxLayout *vLayout = new QHBoxLayout();
     QVBoxLayout *buttonsLayout = new QVBoxLayout();
-    QLabel *aluInfo = new QLabel("<b><i>ALU Operations</i></b><br/>Do nothing: 0<br/>X + Y: 1<br/>X + Y + Carry: 2<br/>X - Y: 3<br/>Shift X left: 4<br/>Shift X right: 5<br/>Pass X: 6<br/>Increment X: 7<br/>Decrement X: 8<br/>X AND Y: 9<br/>X OR Y: 10<br/>X XOR Y: 11<br/>Invert X: 12");
-    QLabel *condInfo = new QLabel("<b><i>Next Row Conditions</i></b><br/>Do nothing: 0<br/>Z == 0: 1<br/>Z &gt; 0: 2<br/>Z &lt; 0: 3<br/>Z &gt;= 0: 4<br/>Z &lt;= 0: 5<br/>4 LSBs of Z: 6<br/>4 MSBs of IR: 7<br/>GPIO In 1: 8<br/>GPIO In 2: 9<br/>");
+    QLabel *aluInfo = new QLabel("<b><i>ALU Operations</i></b><br/>0: Do nothing<br/>1: X + Y<br/>10: X + Y + Carry<br/>11: X - Y<br/>100: Shift X left<br/>101: Shift X right<br/>110: Pass X<br/>111: Increment X<br/>1000: Decrement X<br/>1001: X AND Y<br/>1010: X OR Y<br/>1011: X XOR Y<br/>1100: Invert X");
+    QLabel *condInfo = new QLabel("<b><i>Next Row Conditions</i></b><br/>0: Do nothing<br/>1: Z == 0<br/>10: Z &gt; 0<br/>11: Z &lt; 0<br/>100: Z &gt;= 0<br/>101: Z &lt;= 0<br/>110: 4 LSBs of Z<br/>111: 4 MSBs of IR<br/>1000: GPIO In 1<br/>1001: GPIO In 2<br/>");
     buttonsLayout->addWidget(aluInfo);
     buttonsLayout->addWidget(condInfo);
     buttonsLayout->addStretch();
@@ -52,6 +53,7 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
     vLayout->addWidget(table);
     vLayout->addLayout(buttonsLayout);
 
+    applied = false;
     this->setLayout(vLayout);
 }
 
@@ -96,7 +98,7 @@ void microcodeROM::readRom(QString *text)
             {
             case 0:
                 //next
-                spinBox->setMaximum(255);
+                spinBox->setMaximum(65535);
                 spinBox->setMinimum(0);
                 break;
             case 1:
@@ -172,6 +174,8 @@ void microcodeROM::apply()
         }
     }
     applyButton->setDisabled(true);
+    applied = true;
+
 }
 
 void microcodeROM::cancel(){
@@ -224,7 +228,7 @@ void microcodeROM::addRow()
             {
             case 0:
                 //next
-                spinBox->setMaximum(255);
+                spinBox->setMaximum(65535);
                 spinBox->setMinimum(0);
                 break;
             case 1:
@@ -247,7 +251,7 @@ void microcodeROM::addRow()
             table->setVerticalHeaderLabels(vLabelsBinary);
         } else table->setVerticalHeaderLabels(vLabelsHex);
         apply();
-        if (table->rowCount() == 255) addRowButton->setDisabled(true);
+        if (table->rowCount() == 65535) addRowButton->setDisabled(true);
 }
 
 void microcodeROM::cellChanged(int value)

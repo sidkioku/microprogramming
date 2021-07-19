@@ -22,6 +22,11 @@ public:
     void readRom(QString *text);
     std::vector<std::vector<int>> currentMROM;
     void changeBase(bool binary);
+    bool applied;
+
+public slots:
+    void apply();
+
 
 
 private:
@@ -39,7 +44,6 @@ private:
 
 private slots:
     void ok();
-    void apply();
     void cancel();
     void reset();
     void addRow();

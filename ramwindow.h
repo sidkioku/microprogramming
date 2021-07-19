@@ -33,6 +33,10 @@ public:
     QTableWidget *ramTable;
     void changeValue(int row, int col, int value);
     void changeBase(bool state);
+    bool applied;
+
+public slots:
+    void apply();
 
 
 private:
@@ -40,14 +44,14 @@ private:
     QPushButton *applyButton;
     QPushButton *cancelButton;
     QPushButton *resetButton;
-    QStringList hLabels;
+    QStringList vLabelsBin;
+    QStringList vLabelsHex;
     void closeEvent(QCloseEvent *bar);
 
 
 
 private slots:
     void ok();
-    void apply();
     void cancel();
     void reset();
     void cellChanged(int value);

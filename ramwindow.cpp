@@ -9,8 +9,9 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
     ramTable->setToolTip("8kB RAM");
     ramTable->horizontalHeader()->hide();
     ramTable->setShowGrid(false);
-    ramTable->verticalHeader()->hide();
     for (int row = 0; row < ramTable->rowCount(); row++) {
+        vLabelsBin << QString("%1").arg(row * 4, 0, 2);
+        vLabelsHex << QString("0x%1").arg(row * 4, 0, 16);
         for (int column = 0; column < ramTable->columnCount(); column++)
         {
             QSpinBox *spinBox = new QSpinBox(this);
@@ -24,6 +25,8 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
             if (row % 2 == 0) spinBox->setStyleSheet("QSpinBox {background-color: rgb(204,204,204);}");
         }
     }
+    ramTable->setVerticalHeaderLabels(vLabelsBin);
+    ramTable->verticalHeader()->setDefaultAlignment(Qt::AlignRight);
     ramTable->setSortingEnabled(false);
     ramTable->resizeColumnsToContents();
     okButton = new QPushButton("OK");
@@ -64,6 +67,8 @@ ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
     connect(applyButton, SIGNAL(clicked()), this, SLOT(apply()));
     connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancel()));
     connect(resetButton, SIGNAL(clicked()), this, SLOT(reset()));
+
+    applied = false;
 }
 
 ramWindow::~ramWindow(){}
@@ -91,6 +96,7 @@ void ramWindow::readRam(QString *text)
     ///Read RAM Table
     ramTable->clear();
     ramTable->setShowGrid(false);
+    ramTable->setHorizontalHeaderLabels(vLabelsBin);
 
     QStringList lines = text->split("\n", Qt::SkipEmptyParts);
 
@@ -139,6 +145,7 @@ void ramWindow::apply()
         }
     }
     applyButton->setDisabled(true);
+    applied = true;
 }
 
 void ramWindow::cancel()
@@ -213,6 +220,7 @@ void ramWindow::changeBase(bool binary)
 {
     if (binary)
     {
+        ramTable->setVerticalHeaderLabels(vLabelsBin);
         for (int row = 0; row < ramTable->rowCount(); row++)
         {
             for (int column = 0; column < ramTable->columnCount(); column++)
@@ -224,6 +232,7 @@ void ramWindow::changeBase(bool binary)
     }
     else
     {
+        ramTable->setVerticalHeaderLabels(vLabelsHex);
         for (int row = 0; row < ramTable->rowCount(); row++)
         {
             for (int column = 0; column < ramTable->columnCount(); column++)

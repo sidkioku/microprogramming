@@ -1,8 +1,8 @@
 #include "cpu.h"
 
 bool secondstepread, secondstepwrite = false;
-bool writeenable[12];
-bool outputenable[9];
+bool writeenable[15];
+bool outputenable[13];
 int condition, phase, nextRow, length, steps = 0;
 int base = 2;
 int fieldWidth = 8;
@@ -250,6 +250,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     ramButton->setFont(font);
     ramButton->setMinimumSize(100, 500);
     ramButton->setStyleSheet("border: 3px solid black;");
+    ramButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     ///Outer Data Bus
     data = new QFrame();
@@ -257,6 +258,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     data->setFrameShadow(QFrame::Plain);
     data->setLineWidth(3);
     data->setMinimumSize(100, 3);
+    data->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     ramLayout->addWidget(ramButton);
     ramLayout->addStretch();
@@ -527,10 +529,10 @@ void CPU::paintEvent(QPaintEvent *e)
     {
         painter.setPen(redPen);
         // Arrow X -> ALU Button Red
-        painter.drawPixmap(xReg->x() + 3 * xReg->width()/4 - 9,               aluButton->y() + aluButton->height() - 1,           arrowUpRed->pixmap(18, 18));
+        painter.drawPixmap(xReg->x() + 3 * xReg->width()/4 - 9, aluButton->y() + aluButton->height() - 1,           arrowUpRed->pixmap(18, 18));
 
         //Arrow Y -> ALU Button Red
-        painter.drawPixmap(yReg->x() + yReg->width()/4 - 9,              aluButton->y() + aluButton->height() - 1,           arrowUpRed->pixmap(18, 18));
+        painter.drawPixmap(yReg->x() + yReg->width()/4 - 9, aluButton->y() + aluButton->height() - 1,           arrowUpRed->pixmap(18, 18));
 
         //Arrow ALU Button -> Z Red
         painter.drawPixmap(aluButton->x() + aluButton->width()/2 - 9, zReg->y() + zReg->height(), arrowUpRed->pixmap(18, 18));
@@ -584,21 +586,32 @@ void CPU::paintEvent(QPaintEvent *e)
     painter.drawLine(comparisons->x() + comparisons->width()/2, zReg->y() + zReg->height()/4, comparisons->x() + comparisons->width()/2, comparisons->y() + comparisons->height() + 5);
 
     //Arrow Carry -> ALU
-    if (outputenable[7]) //TODO: Fix outputenable location
+    if (outputenable[9])
     {
         painter.setPen(redPen);
-        painter.drawPixmap(aluButton->x() + aluButton->width(), aluButton->y() + aluButton->height()/2, arrowLeftRed->pixmap(18, 18));
+        painter.drawPixmap(aluButton->x() + aluButton->width(), aluButton->y() + aluButton->height()/2 - 9, arrowLeftRed->pixmap(18, 18));
     }
     else
     {
         painter.setPen(blackPen);
         painter.drawPixmap(aluButton->x() + aluButton->width(), aluButton->y() + aluButton->height()/2 - 9, arrowLeft->pixmap(18, 18));
-        painter.drawPixmap(carryReg->x() + carryReg->width(), carryReg->y() + carryReg->height()/2 - 9, arrowLeft->pixmap(18, 18));
     }
-    painter.drawLine(carryReg->x() + carryReg->width() + 5, carryReg->y() + carryReg->height()/2, carryReg->x() + carryReg->width() + 20, carryReg->y() + carryReg->height()/2);
-    painter.drawLine(carryReg->x() + carryReg->width() + 20, carryReg->y() + carryReg->height()/2, carryReg->x() + carryReg->width() + 20, bus->y());
-    painter.drawLine(carryReg->x() + carryReg->width() + 20, aluButton->y() + aluButton->height()/2, aluButton->x() + aluButton->width() + 5, aluButton->y() + aluButton->height()/2);
+    painter.drawLine(carryReg->x() + 3 * carryReg->width() / 4, carryReg->y() + carryReg->height(), carryReg->x() + 3 * carryReg->width() / 4, aluButton->y() + aluButton->height() / 2);
+    painter.drawLine(carryReg->x() + 3 * carryReg->width() / 4, aluButton->y() + aluButton->height() / 2, aluButton->x() + aluButton->width() + 4, aluButton->y() + aluButton->height() / 2);
 
+    //Arrow BUS -> Carry
+    if (writeenable[12])
+    {
+        painter.setPen(redPen);
+        painter.drawPixmap(carryReg->x() + carryReg->width(), carryReg->y() + carryReg->height() / 2 - 9, arrowLeftRed->pixmap(18, 18));
+    }
+    else
+    {
+        painter.setPen(blackPen);
+        painter.drawPixmap(carryReg->x() + carryReg->width(), carryReg->y() + carryReg->height() / 2 - 9, arrowLeft->pixmap(18, 18));
+    }
+    painter.drawLine(carryReg->x() + carryReg->width() + 5, carryReg->y() + carryReg->height() / 2, carryReg->x() + carryReg->width() + 20, carryReg->y() + carryReg->height() / 2);
+    painter.drawLine(carryReg->x() + carryReg->width() + 20, carryReg->y() + carryReg->height() / 2, carryReg->x() + carryReg->width() + 20, bus->y());
     ///Memory Lines
     //Arrow MDR IN -> BUS
     if (outputenable[7])
@@ -704,35 +717,62 @@ void CPU::paintEvent(QPaintEvent *e)
     painter.drawLine(data->x() + 3 * data->width()/4, ramButton->y() + ramButton->height() + 15, data->x() + 3 * data->width()/4, data->y() - 15);
 
 
-    //TODO: Microcode ROM -> GPIO Out
-    painter.setPen(blackPen);
+    //Microcode ROM -> GPIO Out
+
+    if (outputenable[10])
+    {
+        painter.setPen(redPen);
+        painter.drawPixmap(gpioOut1->x() - 18, gpioOut1->y() + gpioOut1->height() / 2 - 9, arrowRightRed->pixmap(18, 18));
+    }
+    else
+    {
+        painter.setPen(blackPen);
+        painter.drawPixmap(gpioOut1->x() - 18, gpioOut1->y() + gpioOut1->height() / 2 - 9, arrowRight->pixmap(18, 18));
+    }
     painter.drawLine(romButton->x() + romButton->width(), gpioOut1->y() + gpioOut1->height() / 2, gpioOut1->x() - 9, gpioOut1->y() + gpioOut1->height() / 2);
-    painter.drawPixmap(gpioOut1->x() - 18, gpioOut1->y() + gpioOut1->height() / 2 - 9, arrowRight->pixmap(18, 18));
 
+    if (outputenable[11])
+    {
+        painter.setPen(redPen);
+        painter.drawPixmap(gpioOut2->x() - 18, gpioOut2->y() + gpioOut2->height() / 2 - 9, arrowRightRed->pixmap(18, 18));
+    }
+    else
+    {
+        painter.setPen(blackPen);
+        painter.drawPixmap(gpioOut2->x() - 18, gpioOut2->y() + gpioOut2->height() / 2 - 9, arrowRight->pixmap(18, 18));
+    }
     painter.drawLine(romButton->x() + romButton->width(), gpioOut2->y() + gpioOut2->height() / 2, gpioOut2->x() - 9, gpioOut2->y() + gpioOut2->height() / 2);
-    painter.drawPixmap(gpioOut2->x() - 18, gpioOut2->y() + gpioOut2->height() / 2 - 9, arrowRight->pixmap(18, 18));
 
 
-    //TODO: GPIO In -> Microcode ROM
+    //GPIO In -> Microcode ROM
+    if (writeenable[13])
+    {
+        painter.setPen(redPen);
+        painter.drawPixmap(romButton->x() + romButton->width(), gpioIn2->y() + gpioIn2->height() + 50 - 9, arrowLeftRed->pixmap(18, 18));
+    }
+
+    else
+    {
+        painter.setPen(blackPen);
+        painter.drawPixmap(romButton->x() + romButton->width(), gpioIn2->y() + gpioIn2->height() + 50 - 9, arrowLeft->pixmap(18, 18));
+    }
     painter.drawLine(gpioIn1->x() + gpioIn1->width(), gpioIn1->y() + gpioIn1->height() / 2, gpioIn1->x() + gpioIn1->width() + 50, gpioIn1->y() + gpioIn1->height() / 2);
     painter.drawLine(gpioIn1->x() + gpioIn1->width() + 50, gpioIn1->y() + gpioIn1->height() / 2, gpioIn1->x() + gpioIn1->width() + 50, gpioIn2->y() + gpioIn2->height() + 50);
     painter.drawLine(gpioIn1->x() + gpioIn1->width() + 50, gpioIn2->y() + gpioIn2->height() + 50, romButton->x() + romButton->width() + 9, gpioIn2->y() + gpioIn2->height() + 50);
-    painter.drawPixmap(romButton->x() + romButton->width(), gpioIn2->y() + gpioIn2->height() + 50 - 9, arrowLeft->pixmap(18, 18));
 
+    if (writeenable[14])
+    {
+        painter.setPen(redPen);
+        painter.drawPixmap(romButton->x() + romButton->width(), gpioIn2->y() + gpioIn2->height() + 25 - 9, arrowLeftRed->pixmap(18, 18));
+    }
+    else
+    {
+        painter.setPen(blackPen);
+        painter.drawPixmap(romButton->x() + romButton->width(), gpioIn2->y() + gpioIn2->height() + 25 - 9, arrowLeft->pixmap(18, 18));
+    }
     painter.drawLine(gpioIn2->x() + gpioIn2->width(), gpioIn2->y() + gpioIn2->height() / 2, gpioIn2->x() + gpioIn2->width() + 25, gpioIn2->y() + gpioIn2->height() / 2);
     painter.drawLine(gpioIn2->x() + gpioIn2->width() + 25, gpioIn2->y() + gpioIn2->height() / 2, gpioIn2->x() + gpioIn2->width() + 25, gpioIn2->y() + gpioIn2->height() + 25);
     painter.drawLine(gpioIn2->x() + gpioIn2->width() + 25, gpioIn2->y() + gpioIn2->height() + 25, romButton->x() + romButton->width() + 9, gpioIn2->y() + gpioIn2->height() + 25);
-    painter.drawPixmap(romButton->x() + romButton->width(), gpioIn2->y() + gpioIn2->height() + 25 - 9, arrowLeft->pixmap(18, 18));
-    //  //    //Arrow GPIO 1 <-> Outer Data Bus
-    //  //    painter.drawLine(gpio1->x() + gpio1->width()/2, gpio1->y() + gpio1->height(), gpio1->x() + gpio1->width()/2, data->y());
-    //  //    painter.drawPixmap(gpio1->x() + gpio1->width()/2 - 6, gpio1->y() + gpio1->height(), arrowUp->pixmap(18, 18));
-    //  //    painter.drawPixmap(gpio1->x() + gpio1->width()/2 - 6, data->y() - 12, arrowDown->pixmap(18, 18));
-
-    //  //    //Arrow GPIO 2 <-> Outer Data Bus
-    //  //    painter.drawLine(gpio2->x() + gpio2->width()/2, gpio2->y() + gpio2->height(), gpio2->x() + gpio2->width()/2, data->y());
-    //  //    painter.drawPixmap(gpio2->x() + gpio2->width()/2 - 6, gpio2->y() + gpio2->height(), arrowUp->pixmap(18, 18));
-    //  //    painter.drawPixmap(gpio2->x() + gpio2->width()/2 - 6, data->y() - 12, arrowDown->pixmap(18, 18));
-
 
 }
 
@@ -860,270 +900,310 @@ void CPU::ramOpen()
 
 void CPU::multipleSteps()
 {
-    steps = stepCounter->value();
-    while (steps-- > 0)
+    if (microcode->applied || ram->applied)
     {
-        singleStep();
+        multipleStepsButton->setDisabled(true);
+        singleStepButton->setDisabled(true);
+    }
+    else
+    {
+        steps = stepCounter->value();
+        while (steps-- > 0)
+        {
+            singleStep();
+        }
     }
 }
 
 
 void CPU::singleStep()
 {
-    nextRow = microcode->currentMROM[currentRow][0];
-
-    ///Next Row Condition
-    condition = microcode->currentMROM[currentRow][1];
-    int cond = 0;
-    switch (condition)
+    if (microcode->applied || ram->applied)
     {
-    case 1: // == 0 ?
-        cond = zReg->text().toInt(nullptr, base) == 0;
-        break;
-    case 2: // > 0 ?
-        cond = zReg->text().toInt(nullptr, base) > 0;
-        break;
-    case 3:// < 0 ?
-        cond = zReg->text().toInt(nullptr, base) < 0;
-        break;
-    case 4:// >= 0 ?
-        cond = zReg->text().toInt(nullptr, base) >= 0;
-        break;
-    case 5:// <= 0 ?
-        cond = zReg->text().toInt(nullptr, base) <= 0;
-        break;
-    case 6:// 4 LSBs of Z
-        cond = zReg->text().toInt(nullptr, base);
-        cond = cond & 15;
-        break;
-    case 7:// 4 MSBs of IR
-        cond = instructionReg->text().toInt(nullptr, base);
-        cond = (cond & 240) >> 4;
-        break;
-    case 8: //GPIO In 1
-        cond = gpioIn1->isChecked();
-        break;
-    case 9: //GPIO In 2
-        cond = gpioIn2->isChecked();
-        break;
+        multipleStepsButton->setDisabled(true);
+        singleStepButton->setDisabled(true);
     }
-    nextRow = nextRow | cond;
-
-    ///Output Enable
-    int outputcounter = 0;
-    outputenable[0] = microcode->currentMROM[currentRow][4]; //instruction register
-    outputenable[1] = microcode->currentMROM[currentRow][6]; //program counter
-    outputenable[2] = microcode->currentMROM[currentRow][8]; //a register
-    outputenable[3] = microcode->currentMROM[currentRow][10]; //b register
-    outputenable[4] = microcode->currentMROM[currentRow][12]; //c register
-    outputenable[5] = microcode->currentMROM[currentRow][14]; //d register
-    outputenable[6] = microcode->currentMROM[currentRow][18]; //z register
-    outputenable[7] = microcode->currentMROM[currentRow][22]; //mdr in register
-    outputenable[8] = microcode->currentMROM[currentRow][24]; //mdr out register
-
-    QString outputtext = busButton->text();
-
-    if (outputenable[0]) //Instruction Register
+    else
     {
-        outputtext = instructionReg->text();
-        outputcounter++;
-    }
-    if (outputenable[1]) //Program Counter
-    {
-        outputtext = progCounter->text();
-        outputcounter++;
-    }
-    if (outputenable[2]) //A Register
-    {
-        outputtext = aReg->text();
-        outputcounter++;
-    }
-    if (outputenable[3]) //B Register
-    {
-        outputtext = bReg->text();
-        outputcounter++;
-    }
-    if (outputenable[4]) //C Register
-    {
-        outputtext = cReg->text();
-        outputcounter++;
-    }
-    if (outputenable[5]) //D Register
-    {
-        outputtext = dReg->text();
-        outputcounter++;
-    }
-    if (outputenable[6]) //Z Register
-    {
-        outputtext = zReg->text();
-        outputcounter++;
-    }
-    if (outputenable[7]) //MDR In Register
-    {
-        outputtext = mdrInReg->text();
-        outputcounter++;
-    }
-    if (outputcounter > 1)
-    {
-        QString row = QString::number(currentRow);
-        QString output = "Multiple registers putting data out on data bus.\nReset initiated. Error in Microcode row: ";
-        output.append(row);
-        QMessageBox::critical(this, "Conflict on the data bus", output);
-        reset();
+        nextRow = microcode->currentMROM[currentRow][0];
 
-        return;
-    }
-    else busButton->setText(outputtext);
-
-    ///Write Enable
-
-    writeenable[0] = microcode->currentMROM[currentRow][3]; //ir
-    writeenable[1] = microcode->currentMROM[currentRow][5]; //pc
-    writeenable[2] = microcode->currentMROM[currentRow][7]; //a
-    writeenable[3] = microcode->currentMROM[currentRow][9]; //b
-    writeenable[4] = microcode->currentMROM[currentRow][11]; //c
-    writeenable[5] = microcode->currentMROM[currentRow][13]; //d
-    writeenable[6] = microcode->currentMROM[currentRow][15]; //x
-    writeenable[7] = microcode->currentMROM[currentRow][16]; //y
-    writeenable[8] = microcode->currentMROM[currentRow][17]; //z
-    writeenable[9] = microcode->currentMROM[currentRow][20]; //mar
-    writeenable[10] = microcode->currentMROM[currentRow][21]; //mdrin
-    writeenable[11] = microcode->currentMROM[currentRow][23]; //mdrout
-
-
-    if (writeenable[0]) instructionReg->setText(outputtext); //instruction register
-    if (writeenable[1]) progCounter->setText(outputtext); //program counter
-    if (writeenable[2]) aReg->setText(outputtext); //a register
-    if (writeenable[3]) bReg->setText(outputtext); //b register
-    if (writeenable[4]) cReg->setText(outputtext); //c register
-    if (writeenable[5]) dReg->setText(outputtext); //d register
-    if (writeenable[6]) xReg->setText(outputtext); //x register
-    if (writeenable[7]) yReg->setText(outputtext); //y register
-    if (writeenable[9]) marReg->setText(outputtext); //mar register
-    if (writeenable[11]) mdrOutReg->setText(outputtext); //mdr out register
-
-
-    gpioOut1->setChecked(microcode->currentMROM[currentRow][25]);
-    gpioOut2->setChecked(microcode->currentMROM[currentRow][26]);
-
-    ///Operation Code
-    if (writeenable[8])
-    {
-        int opcode = microcode->currentMROM[currentRow][2];
-        int result = zReg->text().toInt(nullptr, base);
-        switch (opcode)
+        ///Next Row Condition
+        condition = microcode->currentMROM[currentRow][1];
+        int cond = 0;
+        switch (condition)
         {
-        case 1: //ADD
-            result = xReg->text().toInt(nullptr, base) + yReg->text().toInt(nullptr, base);
-            if (result > 255)
+        case 1: // == 0 ?
+            cond = zReg->text().toInt(nullptr, base) == 0;
+            break;
+        case 2: // > 0 ?
+            cond = zReg->text().toInt(nullptr, base) > 0;
+            break;
+        case 3:// < 0 ?
+            cond = carryReg->text().toInt();
+            break;
+        case 4:// >= 0 ?
+            cond = ! carryReg->text().toInt();
+            break;
+        case 5:// <= 0 ?
+            cond = carryReg->text().toInt();
+            if (!cond)
             {
-                result = result - 256;
-                carryReg->setText("1");
+                cond = zReg->text().toInt(nullptr, base) == 0;
             }
             break;
-        case 2: //ADD with Carry Flag
-            result = xReg->text().toInt(nullptr, base) + yReg->text().toInt(nullptr, base) + carryReg->text().toInt(nullptr, base);
-            if (result > 255)
-            {
-                result = result - 256;
-                carryReg->setText("1");
-            }
+        case 6:// 4 LSBs of Z
+            cond = zReg->text().toInt(nullptr, base);
+            cond = cond & 15;
             break;
-        case 3: //SUB
-            result = xReg->text().toInt(nullptr, base) - yReg->text().toInt(nullptr, base);
+        case 7:// 4 MSBs of IR
+            cond = instructionReg->text().toInt(nullptr, base);
+            cond = (cond & 240) >> 4;
             break;
-        case 4: //BITSHIFT X LEFT
-            result = xReg->text().toInt(nullptr, base) << 1;
-            if (result > 255)
-            {
-                result = result - 256;
-                carryReg->setText("1");
-            }
+        case 8: //GPIO In 1
+            cond = gpioIn1->isChecked();
             break;
-        case 5: //BITSHIFT X RIGHT
-            result = xReg->text().toInt(nullptr, base) >> 1;
-            if (result > 255)
-            {
-                result = result - 256;
-                carryReg->setText("1");
-            }
-            break;
-        case 6: //PASS X
-            result = xReg->text().toInt(nullptr, base);
-            break;
-        case 7: //INCREMENT X
-            result = xReg->text().toInt(nullptr, base) + 1;
-            if (result > 255)
-            {
-                result = result - 256;
-                carryReg->setText("1");
-            }
-            break;
-        case 8: //DECREMENT X
-            result = xReg->text().toInt(nullptr, base) - 1;
-            break;
-        case 9: //X AND Y
-            result = xReg->text().toInt(nullptr, base) & yReg->text().toInt(nullptr, base);
-            break;
-        case 10: //X OR Y
-            result = xReg->text().toInt(nullptr, base) | yReg->text().toInt(nullptr, base);
-            break;
-        case 11: //X XOR Y
-            result = xReg->text().toInt(nullptr, base) ^ yReg->text().toInt(nullptr, base);
-            break;
-        case 12: //NOT X
-            result = ~xReg->text().toInt(nullptr, base);
+        case 9: //GPIO In 2
+            cond = gpioIn2->isChecked();
             break;
         }
-        if (binary) zReg->setText(QString("%1").arg(result, fieldWidth, base, QChar('0')));
-        else zReg->setText(QString("0x%1").arg(result, fieldWidth, base, QChar('0')));
-    }
-    ///Communication with external RAM
-    if (microcode->currentMROM[currentRow][28]) //mem.en
-    {
-        if (microcode->currentMROM[currentRow][27]) //mem.r
-        {
+        nextRow = nextRow | cond;
 
-            if (secondstepread)
-            {
-                if (writeenable[10]) //mdrin.we
-                {//TODO: find how many things to find
-                    int address = marReg->text().toInt(nullptr, 2);
-                    int row = address / 4;
-                    int col = address % 4;
-                    int val = ram->currentRAM[row][col];
-                    qDebug() << "We made it and the result is: " << ram->currentRAM[row][col];
-                    if (binary) mdrInReg->setText(QString("%1").arg(val, fieldWidth, base, QChar('0'))); // mdr in register
-                    else mdrInReg->setText(QString("0x%1").arg(val, fieldWidth, base, QChar('0')));
-                }
-            }
-            else secondstepread = true;
+        ///Output Enable
+        int outputcounter = 0;
+        outputenable[0] = microcode->currentMROM[currentRow][4]; //instruction register
+        outputenable[1] = microcode->currentMROM[currentRow][6]; //program counter
+        outputenable[2] = microcode->currentMROM[currentRow][8]; //a register
+        outputenable[3] = microcode->currentMROM[currentRow][10]; //b register
+        outputenable[4] = microcode->currentMROM[currentRow][12]; //c register
+        outputenable[5] = microcode->currentMROM[currentRow][14]; //d register
+        outputenable[6] = microcode->currentMROM[currentRow][18]; //z register
+        outputenable[7] = microcode->currentMROM[currentRow][22]; //mdr in register
+        outputenable[8] = microcode->currentMROM[currentRow][24]; //mdr out register
+        outputenable[9] = (microcode->currentMROM[currentRow][2] == 2);
+        outputenable[10] = microcode->currentMROM[currentRow][25]; //GPIO Out 1
+        outputenable[11] = microcode->currentMROM[currentRow][26]; //GPIO Out 2
+        outputenable[12] = microcode->currentMROM[currentRow][19]; //Set Carry = 0
+
+        QString outputtext = busButton->text();
+
+        if (outputenable[0]) //Instruction Register
+        {
+            outputtext = instructionReg->text();
+            outputcounter++;
         }
-        else {
-            if (secondstepwrite)
+        if (outputenable[1]) //Program Counter
+        {
+            outputtext = progCounter->text();
+            outputcounter++;
+        }
+        if (outputenable[2]) //A Register
+        {
+            outputtext = aReg->text();
+            outputcounter++;
+        }
+        if (outputenable[3]) //B Register
+        {
+            outputtext = bReg->text();
+            outputcounter++;
+        }
+        if (outputenable[4]) //C Register
+        {
+            outputtext = cReg->text();
+            outputcounter++;
+        }
+        if (outputenable[5]) //D Register
+        {
+            outputtext = dReg->text();
+            outputcounter++;
+        }
+        if (outputenable[6]) //Z Register
+        {
+            outputtext = zReg->text();
+            outputcounter++;
+        }
+        if (outputenable[7]) //MDR In Register
+        {
+            outputtext = mdrInReg->text();
+            outputcounter++;
+        }
+        if (outputenable[12])
+        {
+            if (binary) outputtext = "00000000";
+            else outputtext = "0x00";
+            outputcounter++;
+        }
+        if (outputcounter > 1)
+        {
+            QString row = QString::number(currentRow);
+            QString output = "Multiple registers putting data out on data bus.\nReset initiated. Error in Microcode row: ";
+            output.append(row);
+            QMessageBox::critical(this, "Conflict on the data bus", output);
+            reset();
+
+            return;
+        }
+        else busButton->setText(outputtext);
+
+        ///Write Enable
+
+        writeenable[0] = microcode->currentMROM[currentRow][3]; //ir
+        writeenable[1] = microcode->currentMROM[currentRow][5]; //pc
+        writeenable[2] = microcode->currentMROM[currentRow][7]; //a
+        writeenable[3] = microcode->currentMROM[currentRow][9]; //b
+        writeenable[4] = microcode->currentMROM[currentRow][11]; //c
+        writeenable[5] = microcode->currentMROM[currentRow][13]; //d
+        writeenable[6] = microcode->currentMROM[currentRow][15]; //x
+        writeenable[7] = microcode->currentMROM[currentRow][16]; //y
+        writeenable[8] = microcode->currentMROM[currentRow][17]; //z
+        writeenable[9] = microcode->currentMROM[currentRow][20]; //mar
+        writeenable[10] = microcode->currentMROM[currentRow][21]; //mdrin
+        writeenable[11] = microcode->currentMROM[currentRow][23]; //mdrout
+        writeenable[12] = microcode->currentMROM[currentRow][19]; //carry reg used by ALU
+        writeenable[13] = microcode->currentMROM[currentRow][1] == 8; //GPIO In 1
+        writeenable[14] = microcode->currentMROM[currentRow][1] == 9; //GPIO In 2
+
+        if (writeenable[0]) instructionReg->setText(outputtext); //instruction register
+        if (writeenable[1]) progCounter->setText(outputtext); //program counter
+        if (writeenable[2]) aReg->setText(outputtext); //a register
+        if (writeenable[3]) bReg->setText(outputtext); //b register
+        if (writeenable[4]) cReg->setText(outputtext); //c register
+        if (writeenable[5]) dReg->setText(outputtext); //d register
+        if (writeenable[6]) xReg->setText(outputtext); //x register
+        if (writeenable[7]) yReg->setText(outputtext); //y register
+        if (writeenable[9]) marReg->setText(outputtext); //mar register
+        if (writeenable[11]) mdrOutReg->setText(outputtext); //mdr out register
+
+
+        gpioOut1->setChecked(microcode->currentMROM[currentRow][25]);
+        gpioOut2->setChecked(microcode->currentMROM[currentRow][26]);
+
+        ///Operation Code
+        if (writeenable[8])
+        {
+            int opcode = microcode->currentMROM[currentRow][2];
+            int result = zReg->text().toInt(nullptr, base);
+            switch (opcode)
             {
-                if (outputenable[8]) //mdrout.oe
+            case 1: //ADD
+                result = xReg->text().toInt(nullptr, base) + yReg->text().toInt(nullptr, base);
+                if (result > 255)
                 {
-                    int address = marReg->text().toInt(nullptr, 2);
-                    int row = address / 4;
-                    int col = address % 4;
-                    ram->currentRAM[row][col] = mdrOutReg->text().toInt(nullptr, base);
-                    ram->changeValue(row, col, mdrOutReg->text().toInt(nullptr, base));
+                    result = result - 256;
+                    carryReg->setText("1");
                 }
+                break;
+            case 2: //ADD with Carry Flag
+                result = xReg->text().toInt(nullptr, base) + yReg->text().toInt(nullptr, base) + carryReg->text().toInt(nullptr, base);
+                if (result > 255)
+                {
+                    result = result - 256;
+                    carryReg->setText("1");
+                }
+                break;
+            case 3: //SUB
+                result = xReg->text().toInt(nullptr, base) - yReg->text().toInt(nullptr, base);
+                if (result < 0)
+                {
+                    result = 256 + result;
+                    carryReg->setText("1");
+                }
+                break;
+            case 4: //BITSHIFT X LEFT
+                result = xReg->text().toInt(nullptr, base) << 1;
+                if (result > 255)
+                {
+                    result = result - 256;
+                    carryReg->setText("1");
+                }
+                break;
+            case 5: //BITSHIFT X RIGHT
+                result = xReg->text().toInt(nullptr, base) >> 1;
+                if (result > 255)
+                {
+                    result = result - 256;
+                    carryReg->setText("1");
+                }
+                break;
+            case 6: //PASS X
+                result = xReg->text().toInt(nullptr, base);
+                break;
+            case 7: //INCREMENT X
+                result = xReg->text().toInt(nullptr, base) + 1;
+                if (result > 255)
+                {
+                    result = result - 256;
+                    carryReg->setText("1");
+                }
+                break;
+            case 8: //DECREMENT X
+                result = xReg->text().toInt(nullptr, base) - 1;
+                break;
+            case 9: //X AND Y
+                result = xReg->text().toInt(nullptr, base) & yReg->text().toInt(nullptr, base);
+                break;
+            case 10: //X OR Y
+                result = xReg->text().toInt(nullptr, base) | yReg->text().toInt(nullptr, base);
+                break;
+            case 11: //X XOR Y
+                result = xReg->text().toInt(nullptr, base) ^ yReg->text().toInt(nullptr, base);
+                break;
+            case 12: //NOT X
+                result = ~xReg->text().toInt(nullptr, base);
+                break;
             }
-            else secondstepwrite = true;
+            if (binary) zReg->setText(QString("%1").arg(result, fieldWidth, base, QChar('0')));
+            else zReg->setText(QString("0x%1").arg(result, fieldWidth, base, QChar('0')));
         }
-    }
+        ///Communication with external RAM
+        if (microcode->currentMROM[currentRow][28]) //mem.en
+        {
+            if (microcode->currentMROM[currentRow][27]) //mem.r
+            {
 
-    if (microcode->currentMROM[currentRow][19]) carryReg->setText("0");
-    currentRow = nextRow;
-    qDebug() << "Next Row: " << nextRow;
-    this->update(); //update colors in GUI
+                if (secondstepread)
+                {
+                    if (writeenable[10]) //mdrin.we
+                    {
+                        int address = marReg->text().toInt(nullptr, 2);
+                        int row = address / 4;
+                        int col = address % 4;
+                        int val = ram->currentRAM[row][col];
+                        if (binary) mdrInReg->setText(QString("%1").arg(val, fieldWidth, base, QChar('0'))); // mdr in register
+                        else mdrInReg->setText(QString("0x%1").arg(val, fieldWidth, base, QChar('0')));
+                    }
+                }
+                else secondstepread = true;
+            }
+            else {
+                if (secondstepwrite)
+                {
+                    if (outputenable[8]) //mdrout.oe
+                    {
+                        int address = marReg->text().toInt(nullptr, 2);
+                        int row = address / 4;
+                        int col = address % 4;
+                        ram->currentRAM[row][col] = mdrOutReg->text().toInt(nullptr, base);
+                        ram->changeValue(row, col, mdrOutReg->text().toInt(nullptr, base));
+                    }
+                }
+                else secondstepwrite = true;
+            }
+        }
+
+        if (microcode->currentMROM[currentRow][19]) carryReg->setText("0");
+        currentRow = nextRow;
+        qDebug() << "Next Row: " << nextRow;
+        this->update(); //update colors in GUI
+    }
 }
 
 
 void CPU::reset()
 {
+    microcode->apply();
+    ram->apply();
+    microcode->applied = false;
+    ram->applied = false;
     currentInstruction = 0;
     currentRow = 1;
     nextRow = 2;
