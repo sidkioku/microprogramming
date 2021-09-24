@@ -206,16 +206,16 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     alu->addLayout(aluLayout);
 
 
-    hexbin = new QPushButton("Hexadecimal");
+    hexbin = new QPushButton("Hexadecimal", this);
     ///Memory Access Registers
-    marLabel = new QLabel("Memory Address Register");
+    marLabel = new QLabel("Memory Address Register", this);
     marLabel->setAlignment(Qt::AlignCenter);
     marReg = new QPushButton("00000000");
     marReg->setCursor(Qt::WhatsThisCursor);
     marReg->setStyleSheet("border: 3px solid black;");
     marReg->setMinimumSize(125, 23);
 
-    mdrInLabel = new QLabel("Memory Data Register In");
+    mdrInLabel = new QLabel("Memory Data Register In", this);
     mdrInLabel->setAlignment(Qt::AlignCenter);
     mdrInReg = new QPushButton("00000000");
     mdrInReg->setCursor(Qt::WhatsThisCursor);
@@ -253,7 +253,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
     ramButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     ///Outer Data Bus
-    data = new QFrame();
+    data = new QFrame(this);
     data->setFrameShape(QFrame::HLine);
     data->setFrameShadow(QFrame::Plain);
     data->setLineWidth(3);
@@ -277,7 +277,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
 
 
     ///Inner Data Bus
-    bus = new QFrame();
+    bus = new QFrame(this);
     bus->setFrameShape(QFrame::HLine);
     bus->setFrameShadow(QFrame::Plain);
     bus->setLineWidth(3);
@@ -304,7 +304,7 @@ CPU::CPU(QWidget *parent) : QMainWindow(parent)
 
     widget->setLayout(completeLayout);
     this->setCentralWidget(widget);
-    this->setMinimumSize(1400, 750);
+    this->setMinimumSize(1400, 665);
 
 
     QFile file(":/demoROMs/instruction fetch.rom");
@@ -773,7 +773,6 @@ void CPU::paintEvent(QPaintEvent *e)
     painter.drawLine(gpioIn2->x() + gpioIn2->width(), gpioIn2->y() + gpioIn2->height() / 2, gpioIn2->x() + gpioIn2->width() + 25, gpioIn2->y() + gpioIn2->height() / 2);
     painter.drawLine(gpioIn2->x() + gpioIn2->width() + 25, gpioIn2->y() + gpioIn2->height() / 2, gpioIn2->x() + gpioIn2->width() + 25, gpioIn2->y() + gpioIn2->height() + 25);
     painter.drawLine(gpioIn2->x() + gpioIn2->width() + 25, gpioIn2->y() + gpioIn2->height() + 25, romButton->x() + romButton->width() + 9, gpioIn2->y() + gpioIn2->height() + 25);
-
 }
 
 void CPU::microcodeFile()
@@ -886,9 +885,9 @@ void CPU::changeBase()
 
 void CPU::microcodeOpen()
 {
-    microcode->show();
     microcode->raise();
     microcode->activateWindow();
+    microcode->showNormal();
 }
 
 void CPU::ramOpen()
@@ -1137,6 +1136,11 @@ void CPU::singleStep()
                 break;
             case 8: //DECREMENT X
                 result = xReg->text().toInt(nullptr, base) - 1;
+                if (result < 0)
+                {
+                    result = 256 + result;
+                    carryReg->setText("1");
+                }
                 break;
             case 9: //X AND Y
                 result = xReg->text().toInt(nullptr, base) & yReg->text().toInt(nullptr, base);

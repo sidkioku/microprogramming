@@ -4,9 +4,9 @@
 ramWindow::ramWindow(QWidget *parent) : QWidget(parent)
 {
     this->setWindowTitle("External Random Access Memory (RAM)");
-    ramTable = new QTableWidget(2048, 4, this);
+    ramTable = new QTableWidget(64, 4, this);
 
-    ramTable->setToolTip("8kB RAM");
+    ramTable->setToolTip("256 Byte RAM");
     ramTable->horizontalHeader()->hide();
     ramTable->setShowGrid(false);
     for (int row = 0; row < ramTable->rowCount(); row++) {
