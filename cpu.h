@@ -109,6 +109,14 @@ private:
     QBoxLayout* drawAlu();
     void executeMicrocodeRow();
 
+    QIcon *arrowDownRed = new QIcon(":/arrows/icons/arrowDownRed.png");
+    QIcon *arrowLeftRed = new QIcon(":/arrows/icons/arrowLeftRed.png");
+    QIcon *arrowUpRed = new QIcon(":/arrows/icons/arrowUpRed.png");
+    QIcon *arrowRightRed = new QIcon(":/arrows/icons/arrowRightRed.png");
+    QIcon *arrowDown = new QIcon(":/arrows/icons/arrowDown.png");
+    QIcon *arrowLeft = new QIcon(":/arrows/icons/arrowLeft.png");
+    QIcon *arrowUp = new QIcon(":/arrows/icons/arrowUp.png");
+    QIcon *arrowRight = new QIcon(":/arrows/icons/arrowRight.png");
 
 
     void closeEvent(QCloseEvent *event);

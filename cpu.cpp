@@ -347,14 +347,6 @@ void CPU::paintEvent(QPaintEvent *e)
     QPen redPen(Qt::red);
     dashedPen.setStyle(Qt::DashLine);
     dashedRedPen.setStyle(Qt::DashLine);
-    QIcon *arrowDownRed = new QIcon(":/arrows/icons/arrowDownRed.png");
-    QIcon *arrowLeftRed = new QIcon(":/arrows/icons/arrowLeftRed.png");
-    QIcon *arrowUpRed = new QIcon(":/arrows/icons/arrowUpRed.png");
-    QIcon *arrowRightRed = new QIcon(":/arrows/icons/arrowRightRed.png");
-    QIcon *arrowDown = new QIcon(":/arrows/icons/arrowDown.png");
-    QIcon *arrowLeft = new QIcon(":/arrows/icons/arrowLeft.png");
-    QIcon *arrowUp = new QIcon(":/arrows/icons/arrowUp.png");
-    QIcon *arrowRight = new QIcon(":/arrows/icons/arrowRight.png");
     redPen.setWidth(4);
     blackPen.setWidth(4);
     dashedPen.setWidth(2);
@@ -1244,6 +1236,7 @@ void CPU::reset()
         progCounter->setText("0x00");
 
     }
+    carryReg->setText("0");
     steps = 0;
     singleStepButton->setEnabled(true);
     multipleStepsButton->setEnabled(true);
