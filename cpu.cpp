@@ -920,23 +920,29 @@ void CPU::singleStep()
 
         ///Next Row Condition
         condition = microcode->currentMROM[currentRow][1];
+        int nextRowPossibilities = 0;
         int cond = 0;
         switch (condition)
         {
         case 1: // == 0 ?
             cond = zReg->text().toInt(nullptr, base) == 0;
+            nextRowPossibilities = 1;
             break;
         case 2: // > 0 ?
             cond = zReg->text().toInt(nullptr, base) > 0;
+            nextRowPossibilities = 1;
             break;
         case 3:// < 0 ?
             cond = carryReg->text().toInt();
+            nextRowPossibilities = 1;
             break;
         case 4:// >= 0 ?
             cond = ! carryReg->text().toInt();
+            nextRowPossibilities = 1;
             break;
         case 5:// <= 0 ?
             cond = carryReg->text().toInt();
+            nextRowPossibilities = 1;
             if (!cond)
             {
                 cond = zReg->text().toInt(nullptr, base) == 0;
@@ -944,19 +950,162 @@ void CPU::singleStep()
             break;
         case 6:// 4 LSBs of Z
             cond = zReg->text().toInt(nullptr, base);
+            nextRowPossibilities = 15;
             cond = cond & 15;
             break;
         case 7:// 4 MSBs of IR
             cond = instructionReg->text().toInt(nullptr, base);
+            nextRowPossibilities = 15;
             cond = (cond & 240) >> 4;
             break;
         case 8: //GPIO In 1
             cond = gpioIn1->isChecked();
+            nextRowPossibilities = 1;
             break;
         case 9: //GPIO In 2
             cond = gpioIn2->isChecked();
+            nextRowPossibilities = 1;
             break;
         }
+        microcode->currentRowLabel->setText(QString("Current Row: %1").arg(currentRow));
+        QString nextRowText = QString("Next Row: %1").arg(nextRow);
+
+        if (nextRowPossibilities == 1)
+        {
+            if (!(nextRow & 1)) nextRowText.append(QString(" | %1").arg(nextRow + 1));
+        }
+        else if (nextRowPossibilities == 15)
+        {
+            int nextRowLSBs = nextRow & 0b1111;
+            int count = 0;
+
+            for (int i = 0; i < (int) sizeof(int) * 8; i++) {
+                if (nextRowLSBs & (1 << i))
+                    count++;
+            }
+            switch(count)
+            {
+            case 0:
+                while (nextRowPossibilities > 0)
+                {
+                    nextRowText.append(QString(" | %1").arg((nextRow + 0b10000) - nextRowPossibilities));
+                    nextRowPossibilities--;
+                }
+                break;
+            case 1:
+                nextRowPossibilities = 7;
+                if (nextRow & 0b1)
+                {
+                    while (nextRowPossibilities > 0)
+                    {
+                        nextRowText.append(QString(" | %1").arg((nextRow + 0b10000) - (nextRowPossibilities * 2)));
+                    }
+                }
+                else if (nextRow & 0b10)
+                {
+                    int othernextRow = nextRow;
+                    while (nextRowPossibilities > 0)
+                    {
+                        othernextRow++;
+                        if (othernextRow & 0b10)
+                        {
+                            nextRowText.append(QString(" | %1").arg(othernextRow));
+                            nextRowPossibilities--;
+                        }
+                    }
+                }
+                else if (nextRow & 0b100)
+                {
+                    int othernextRow = nextRow;
+                    while (nextRowPossibilities > 0)
+                    {
+                        othernextRow++;
+                        if (othernextRow & 0b100)
+                        {
+                            nextRowText.append(QString(" | %1").arg(othernextRow));
+                            nextRowPossibilities--;
+                        }
+                    }
+                }
+                else
+                {
+                    int othernextRow = nextRow;
+                    while (nextRowPossibilities > 0)
+                    {
+                        othernextRow++;
+                        if (othernextRow & 0b1000)
+                        {
+                            nextRowText.append(QString(" | %1").arg(othernextRow));
+                            nextRowPossibilities--;
+                        }
+                    }
+                }
+                break;
+            case 2:
+                nextRowPossibilities = 3;
+                if (nextRow & 1)
+                {
+                    if (nextRow & 0b10)
+                    {
+                        nextRowText.append(QString(" | %1").arg(nextRow + 0b100));
+                        nextRowText.append(QString(" | %1").arg(nextRow + 0b1000));
+                        nextRowText.append(QString(" | %1").arg(nextRow + 0b1100));
+
+                    }
+                    else if (nextRow & 0b100)
+                    {
+                        nextRowText.append(QString(" | %1").arg(nextRow + 0b10));
+                        nextRowText.append(QString(" | %1").arg(nextRow + 0b1000));
+                        nextRowText.append(QString(" | %1").arg(nextRow + 0b1010));
+                    }
+                    else {
+                        nextRowText.append(QString(" | %1").arg(nextRow + 0b10));
+                        nextRowText.append(QString(" | %1").arg(nextRow + 0b100));
+                        nextRowText.append(QString(" | %1").arg(nextRow + 0b110));
+
+                    }
+                }
+                else
+                {
+                    nextRowText.append(QString(" | %1").arg(nextRow + 0b1));
+                    if (nextRow & 0b10)
+                    {
+                        if (nextRow & 0b100)
+                        {
+                            nextRowText.append(QString(" | %1").arg(nextRow + 0b1000));
+                            nextRowText.append(QString(" | %1").arg(nextRow + 0b1001));
+                        }
+                        else
+                        {
+                            nextRowText.append(QString(" | %1").arg(nextRow + 0b101));
+                            nextRowText.append(QString(" | %1").arg(nextRow + 0b100));
+
+                        }
+                    }
+                    else
+                    {
+                        nextRowText.append(QString(" | %1").arg(nextRow + 0b10));
+                        nextRowText.append(QString(" | %1").arg(nextRow + 0b11));
+                    }
+
+                }
+                break;
+            case 3:
+                nextRowPossibilities = 1;
+                if (!(nextRow & 1)) nextRowText.append(QString(" | %1").arg(nextRow + 1));
+                else if ((nextRow & 0b10) != 0b10) nextRowText.append(QString(" | %1").arg(nextRow + 0b10));
+                else if ((nextRow & 0b100) != 0b100) nextRowText.append(QString(" | %1").arg(nextRow + 0b100));
+                else nextRowText.append(QString(" | %1").arg(nextRow + 0b1000));
+                break;
+            case 4:
+                break;
+            }
+            if (nextRowLSBs == 0b1111)
+                if (!(nextRow & 0b1111)) nextRowText.append(QString(" | %1").arg(nextRow + 1));
+
+        }
+        microcode->nextRowLabel->setText(nextRowText);
+
         nextRow = nextRow | cond;
 
         ///Output Enable
@@ -1246,13 +1395,13 @@ void CPU::reset()
 void CPU::irExp()
 {
     QMessageBox::information(this, "Instruction Register", "This is the Instruction Register. After the CPU fetches the instruction from the address that the PC provided, the instruction is\n"
-  "copied to the Instruction Register so that it can be decoded.");
+                                                           "copied to the Instruction Register so that it can be decoded.");
 }
 
 void CPU::pcExp()
 {
     QMessageBox::information(this, "Program Counter Register", "This is the Program Counter. It provides where the computer is in its program sequence. "
-  "After the instruction is fetched through the MAR/MDR, the PC normally increments.");
+                                                               "After the instruction is fetched through the MAR/MDR, the PC normally increments.");
 }
 
 void CPU::aRegExp()
@@ -1263,7 +1412,7 @@ void CPU::aRegExp()
 void CPU::aluExp()
 {
     QMessageBox::information(this, "Arithmetic Logic Unit", "This is the Arithmetic Logic Unit (ALU). It takes the Inputs X and Y and gives the Output Z. "
-  "It can add, substract, shift left or right, store or halt.");
+                                                            "It can add, substract, shift left or right, store or halt.");
 }
 
 void CPU::mdrInExp()

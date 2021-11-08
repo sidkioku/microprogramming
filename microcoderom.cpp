@@ -42,12 +42,12 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
     QVBoxLayout *buttonsLayout = new QVBoxLayout();
     QLabel *aluInfo = new QLabel("<b><i>ALU Operations</i></b><br/>0: Do nothing<br/>1: X + Y<br/>10: X + Y + Carry<br/>11: X - Y<br/>100: Shift X left<br/>101: Shift X right<br/>110: Pass X<br/>111: Increment X<br/>1000: Decrement X<br/>1001: X AND Y<br/>1010: X OR Y<br/>1011: X XOR Y<br/>1100: Invert X");
     QLabel *condInfo = new QLabel("<b><i>Next Row Conditions</i></b><br/>0: Do nothing<br/>1: Z == 0<br/>10: Z &gt; 0<br/>11: Z &lt; 0<br/>100: Z &gt;= 0<br/>101: Z &lt;= 0<br/>110: 4 LSBs of Z<br/>111: 4 MSBs of IR<br/>1000: GPIO In 1<br/>1001: GPIO In 2<br/>");
-    QLabel *currentRow = new QLabel("<b><i>Current Row:</i></b> 1");
-    QLabel *nextRow = new QLabel("<b><i>Possible next rows:</i></b> 2");
+    currentRowLabel = new QLabel("<b><i>Current Row:</i></b> 1");
+    nextRowLabel = new QLabel("<b><i>Possible next rows:</i></b> 2");
     buttonsLayout->addWidget(aluInfo);
     buttonsLayout->addWidget(condInfo);
-    buttonsLayout->addWidget(currentRow);
-    buttonsLayout->addWidget(nextRow);
+    buttonsLayout->addWidget(currentRowLabel);
+    buttonsLayout->addWidget(nextRowLabel);
     buttonsLayout->addStretch();
     buttonsLayout->addWidget(resetButton);
     buttonsLayout->addWidget(addRowButton);

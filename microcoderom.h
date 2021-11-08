@@ -23,6 +23,8 @@ public:
     std::vector<std::vector<int>> currentMROM;
     void changeBase(bool binary);
     bool applied;
+    QLabel *currentRowLabel;
+    QLabel *nextRowLabel;
 
 public slots:
     void apply();
