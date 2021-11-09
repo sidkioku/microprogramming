@@ -44,6 +44,8 @@ microcodeROM::microcodeROM(QWidget *parent) : QWidget(parent)
     QLabel *condInfo = new QLabel("<b><i>Next Row Conditions</i></b><br/>0: Do nothing<br/>1: Z == 0<br/>10: Z &gt; 0<br/>11: Z &lt; 0<br/>100: Z &gt;= 0<br/>101: Z &lt;= 0<br/>110: 4 LSBs of Z<br/>111: 4 MSBs of IR<br/>1000: GPIO In 1<br/>1001: GPIO In 2<br/>");
     currentRowLabel = new QLabel("<b><i>Current Row:</i></b> 1");
     nextRowLabel = new QLabel("<b><i>Possible next rows:</i></b> 2");
+    nextRowLabel->setWordWrap(true);
+    nextRowLabel->setMaximumWidth(400);
     buttonsLayout->addWidget(aluInfo);
     buttonsLayout->addWidget(condInfo);
     buttonsLayout->addWidget(currentRowLabel);

@@ -970,6 +970,7 @@ void CPU::singleStep()
         microcode->currentRowLabel->setText(QString("Current Row: %1").arg(currentRow));
         QString nextRowText = QString("Next Row: %1").arg(nextRow);
 
+
         if (nextRowPossibilities == 1)
         {
             if (!(nextRow & 1)) nextRowText.append(QString(" | %1").arg(nextRow + 1));
@@ -1497,7 +1498,6 @@ QBoxLayout* CPU::drawAlu()
     aluInLayout->addLayout(xLayout);
     aluInLayout->addLayout(yLayout);
 
-
     aluButton = new QPushButton("Arithmetic Logic Unit");
     aluButton->setStyleSheet("border: 3px solid black;");
     aluButton->setCursor(Qt::WhatsThisCursor);
@@ -1507,8 +1507,6 @@ QBoxLayout* CPU::drawAlu()
     font.setUnderline(true);
     aluButton->setFont(font);
     aluButton->setMinimumSize(200, 23);
-
-
 
     aluLayout->addLayout(aluOutLayout);
     aluLayout->addSpacing(20);
